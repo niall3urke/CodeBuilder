@@ -1,0 +1,352 @@
+﻿@page "/checks/edit/{id:guid}"
+@using CodeBuilder.Bases
+@using CodeBuilder.Code
+@using CodeBuilder.Components
+@using CodeBuilder.Models
+@using CodeBuilder.Operations.Commands
+@using CodeBuilder.Operations.Queries
+@using CodeBuilder.Pages.Checks.Helpers
+@using CodeBuilder.Pages.Checks.Modals
+@using CodeBuilder.Services
+@using CodeBuilder.Services.Modal
+
+@inherits BaseComponent
+@inject DisplaySettingsService Settings
+@inject ModalService Modal
+@implements IViewManager
+
+<section class="section">
+    <div class="container @(Settings.Expand ? "is-fluid" : "")">
+        @if (_check == null)
+        {
+            <div class="buttons are-large is-centered">
+                <button class="button is-light is-loading"></button>
+            </div>
+        }
+        else
+        {
+            <div class="columns is-centered">
+                <div class="column @(Settings.Expand ? "" : "is-8")">
+                    <div class="mb-6">
+                        <div class="level is-mobile">
+                            <div class="level-left">
+                                <div class="level-item">
+                                    <h3 class="title is-3">Edit Check</h3>
+                                </div>
+                            </div>
+                            <div class="level-right">
+                                <div class="level-item">
+                                    <button class="button is-light is-circle" @onclick="SaveAndGoToChecks">
+                                        <span class="icon">
+                                            <i class="fa fa-times"></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- #Basics -->
+                    <IModelComponent Item="_check"></IModelComponent>
+                    <IStandardizedComponent Item="_check"></IStandardizedComponent>
+                    <!-- #Blocks -->
+                    <div class="box px-6 py-6">
+                        <div class="level is-mobile">
+                            <div class="level-left">
+                                <div class="level-item">
+                                    <span class="icon is-small">
+                                        <i class="fa fa-file"></i>
+                                    </span>
+                                </div>
+                                <div class="level-item">
+                                    <h4 class="label">Calculations</h4>
+                                </div>
+                            </div>
+                            <div class="level-right">
+                                <div class="level-item">
+                                    <button class="button is-small is-white is-circle">
+                                        <span class="icon">
+                                            <i class="fa fa-question"></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="level">
+                            <div class="level-left">
+                                <div class="level-item">
+                                    <div class="field">
+                                        <div class="control">
+                                            <div class="dropdown is-fullwidth @(_view.CalculationSearchResults.Count > 0 ? "is-active" : "")">
+                                                <div class="dropdown-trigger">
+                                                    <div class="control has-icons-left has-icons-right">
+                                                        <input class="input" type="text" placeholder="Search..." @bind="@_view.CalculationSearchTerm" @bind:event="oninput" @onkeyup="CalculationSearch">
+                                                        <span class="icon is-left">
+                                                            <i class="fa fa-search"></i>
+                                                        </span>
+                                                        @if (_view.CalculationLoading)
+                                                        {
+                                                            <span class="icon is-right">
+                                                                <i class="fa fa-spinner fa-spin"></i>
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div class="dropdown-menu" role="menu">
+                                                    <div class="dropdown-content">
+                                                        @foreach (var calculation in _view.CalculationSearchResults)
+                                                        {
+                                                            <a class="dropdown-item" @onclick="() => CalculationSelected(calculation)">
+                                                                @($"{calculation.Name}")
+                                                            </a>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="level-right"></div>
+                        </div>
+                        @foreach (var block in _check.Block.Children)
+                        {
+                            <CascadingValue Value="this">
+                                <BlockComponent Block="block"></BlockComponent>
+                            </CascadingValue>
+                        }
+                    </div>
+                    <!-- #Meta -->
+                    <IMetaComponent Item="_check"></IMetaComponent>
+                    <!-- #Buttons -->
+                    <div class="level">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <button class="button is-danger is-outlined" @onclick="Delete">
+                                    <span class="icon">
+                                        <i class="fa fa-trash"></i>
+                                    </span>
+                                    <span>Delete</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="leve-item">
+                                <button class="button is-light" @onclick="ShowPreview">
+                                    <span class="icon">
+                                        <i class="fa fa-code"></i>
+                                    </span>
+                                    <span>Preview</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+
+    // Parameters
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    // Fields
+
+    private BlockDropManager _dropManager;
+
+    private CheckModel _check;
+
+    private ViewModel _view;
+
+    // Constructors
+
+    public ChecksEditPage()
+    {
+        _view = new ViewModel();
+    }
+
+    // Events
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await GetItemFromDatabase())
+        {
+            _dropManager = new BlockDropManager(ContextFactory)
+                {
+                    Update = StateHasChanged
+                };
+        }
+    }
+
+    private async Task<bool> GetItemFromDatabase()
+    {
+        _check = await new GetCheckQuery(ContextFactory, Id).Execute();
+
+        return _check != null;
+    }
+
+    // Methods
+
+    private async Task SaveAndGoToChecks()
+    {
+        if (await new UpdateCommand<CheckModel>(ContextFactory, _check).Execute())
+        {
+            Nav.NavigateTo("/checks");
+        }
+    }
+
+    private async Task CalculationSelected(VariableModel calculation)
+    {
+        var block = new BlockModel()
+            {
+                CalculationId = calculation.Id,
+                ParentId = _check.Block.Id,
+                Index = _check.Block.Children.Count(),
+            };
+
+        if (await new CreateCommand<BlockModel>(ContextFactory, block).Execute())
+        {
+            block.Calculation = calculation;
+            block.Parent = _check.Block;
+            _check.Block.Children.Add(block);
+        }
+
+        _view.CalculationSearchResults.Clear();
+
+        _view.CalculationSearchTerm = "";
+    }
+
+    private async Task CalculationSearch()
+    {
+        if (_view.CalculationLoading)
+            return;
+
+        if (_view.CalculationSearchTerm.Length < 2)
+        {
+            _view.CalculationSearchResults.Clear();
+            return;
+        }
+
+        try
+        {
+            await StartCalculationLoading();
+
+            _view.CalculationSearchResults = (await new GetCollectionQuery<VariableModel>(ContextFactory)
+                .WithFilters(x =>
+                    x.Math.Contains(_view.CalculationSearchTerm) ||
+                    x.Code.Contains(_view.CalculationSearchTerm) ||
+                    x.Name.Contains(_view.CalculationSearchTerm) ||
+                    x.Desc.Contains(_view.CalculationSearchTerm))
+                .Execute())
+                .ToList();
+
+            StateHasChanged();
+        }
+        finally
+        {
+            _view.CalculationLoading = false;
+        }
+    }
+
+    private async Task StartCalculationLoading()
+    {
+        _view.CalculationLoading = true;
+
+        await Task.Delay(10);
+
+        StateHasChanged();
+    }
+
+    // Methods - drag and drop
+
+    public async Task RemoveConditionLhs(ConditionModel condition) =>
+        await _dropManager.HandleRemoveLhsCondition(condition);
+
+    public async Task RemoveConditionRhs(ConditionModel condition) =>
+        await _dropManager.HandleRemoveRhsCondition(condition);
+
+
+    public async Task ConditionLhsDrop(ConditionModel target) =>
+        await _dropManager.HandleLhsConditionDrop(target);
+
+    public async Task ConditionRhsDrop(ConditionModel target) =>
+        await _dropManager.HandleRhsConditionDrop(target);
+
+    public void SetSelectedItem(BlockModel block) =>
+        _dropManager.SetDraggedItem(block);
+
+    public async Task ReorderDrop(BlockModel target) =>
+        await _dropManager.HandleDropReorder(target);
+
+    public async Task NestingDrop(BlockModel target) =>
+        await _dropManager.HandleDropNesting(target);
+
+    public async Task DeleteBlock(BlockModel block) =>
+        await _dropManager.HandleDelete(block);
+
+    // Deletion
+
+    private async Task Delete()
+    {
+        await Delete(_check.Block);
+
+        if (await new DeleteCommand<CheckModel>(ContextFactory, _check.Id).Execute())
+        {
+            Nav.NavigateTo("/checks");
+        }
+    }
+
+    private async Task Delete(BlockModel block)
+    {
+        if (block.Condition != null)
+        {
+            await new DeleteCommand<ConditionModel>(ContextFactory, block.Condition.Id).Execute();
+        }
+
+        foreach (var child in block.Children)
+        {
+            await Delete(child);
+        }
+
+        await new DeleteCommand<BlockModel>(ContextFactory, block.Id).Execute();
+    }
+
+    // Modal
+
+    private void ShowPreview()
+    {
+        var parameters = new ModalParameters();
+
+        parameters.Add("Model", _check);
+
+        Modal.Show<CheckPreviewModal>(parameters);
+    }
+
+    // Classes
+
+    private class ViewModel
+    {
+
+        // Properties
+
+        public List<VariableModel> CalculationSearchResults { get; set; }
+
+        public string CalculationSearchTerm { get; set; }
+
+        public bool CalculationLoading { get; set; }
+
+        // Constructors
+
+        public ViewModel()
+        {
+            CalculationSearchResults = new List<VariableModel>();
+            CalculationSearchTerm = "";
+        }
+
+
+    }
+}

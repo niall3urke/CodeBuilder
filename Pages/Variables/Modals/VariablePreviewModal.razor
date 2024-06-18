@@ -1,0 +1,62 @@
+﻿@using CodeBuilder.Code
+@using CodeBuilder.Models
+@using CodeBuilder.Services.Modal
+@inject ModalService Modal
+
+<div class="modal-background" @onclick="Close"></div>
+<div class="modal-content">
+    <div class="box p6-tablet">
+        <div class="box has-background-light is-shadowless is-family-code">
+            @{
+                int margin = 0;
+
+                foreach (var line in _content.Split(Environment.NewLine))
+                {
+                    if (line.Trim() == "}")
+                        margin--;
+
+                    @if (line.Trim().StartsWith(@"//"))
+                    {
+                        <br />
+                    }
+                    <p class="is-family-code" style="margin-left: @(margin*3)rem;">@line</p>
+
+                    if (line.Trim() == "{")
+                        margin++;
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+
+    // Cascades
+
+    [CascadingParameter] public ModalParameters Parameters { get; set; }
+
+    // Fields
+
+    private string _content;
+
+    // Events
+
+    protected override void OnInitialized()
+    {
+        if (!Parameters.TryGet("Model", out VariableModel model))
+        {
+            Close();
+        }
+
+        if (!Parameters.TryGet("Variables", out List<VariableModel> variables))
+        {
+            Close();
+        }
+
+        _content = Converter.Calculation(model, variables);
+    }
+
+    // Methods
+
+    void Close() => Modal.Close(ModalResult.Cancel());
+}

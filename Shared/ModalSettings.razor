@@ -1,0 +1,43 @@
+﻿@using CodeBuilder.Bases
+@using CodeBuilder.Services.Modal
+@inherits BaseComponent
+
+<div class="modal-background" @onclick="Cancel"></div>
+<div class="modal-content">
+    <div class="box p6-tablet">
+        <a class="is-pulled-right delete" @onclick="Cancel"></a>
+        <p class="title">Settings</p>
+        <div class="field">
+            <label class="heading">Page Width</label>
+            <label class="checkbox">
+                <input type="checkbox" @onchange="ExpandChanged" checked="@Settings.Expand">
+                Fullwidth
+            </label>
+        </div>
+        <div class="buttons is-right mt-6">
+            <button class="button is-link is-light" @onclick="Close">
+                <span>Close</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+@code {
+
+    // Methods
+
+    private void Cancel() => Modal.Close(ModalResult.Cancel());
+
+    private void Close() => Modal.Close(ModalResult.OK());
+
+    private async void ExpandChanged(ChangeEventArgs e)
+    {
+        if (GetValue(e, out bool value))
+        {
+            Settings.Expand = value;
+            await Settings.Save();
+        }
+    }
+
+}

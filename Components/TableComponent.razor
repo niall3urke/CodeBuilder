@@ -1,0 +1,471 @@
+﻿@using CodeBuilder.Code
+@using CodeBuilder.Operations.Queries
+@using System.Linq.Expressions
+
+@typeparam T where T : class, IStandardized
+@inherits BasePageable<T>
+@inject IJSRuntime Js
+
+<div class="level mb-6">
+    <div class="level-left">
+        <div class="level-item">
+            <div class="field">
+                <div class="control has-icons-left">
+                    <input class="input has-background-light is-borderless is-shadowless" type="text" placeholder="Search..." @bind="_searchTerm" @bind:event="oninput" @onkeyup="Search" />
+                    <span class="icon is-left">
+                        <i class="fa fa-search"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div clas="level-item">
+            <div class="field is-grouped">
+                <div class="control">
+                    <div class="dropdown is-hoverable">
+                        <div class="dropdown-trigger">
+                            <button class="button is-light" aria-haspopup="true" aria-controls="dropdown-menu">
+                                <span>Sort</span>
+                                <span class="icon is-small">
+                                    <i class="fas fa-angle-down" aria-hidden="true"></i>
+                                </span>
+                            </button>
+                        </div>
+                        <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                            <div class="dropdown-content">
+                                @if (Options.ShowDate)
+                                {
+                                    <a class="dropdown-item @(_order == OrderBy.Date ? "is-active": "")" @onclick="() => SetOrder(OrderBy.Date)">
+                                        Date
+                                    </a>
+                                }
+                                @if (Options.ShowName)
+                                {
+                                    <a class="dropdown-item @(_order == OrderBy.Name ? "is-active": "")" @onclick="() => SetOrder(OrderBy.Name)">
+                                        Name
+                                    </a>
+                                }
+                                @if (Options.ShowMath)
+                                {
+                                    <a class="dropdown-item @(_order == OrderBy.Math ? "is-active": "")" @onclick="() => SetOrder(OrderBy.Math)">
+                                        Math
+                                    </a>
+                                }
+                                @if (Options.ShowUnit)
+                                {
+                                    <a class="dropdown-item @(_order == OrderBy.Unit ? "is-active": "")" @onclick="() => SetOrder(OrderBy.Unit)">
+                                        Unit
+                                    </a>
+                                }
+                                @if (Options.ShowDesc)
+                                {
+                                    <a class="dropdown-item @(_order == OrderBy.Desc ? "is-active": "")" @onclick="() => SetOrder(OrderBy.Desc)">
+                                        Description
+                                    </a>
+                                }
+                                @if (Options.ShowStandard)
+                                {
+                                    <a class="dropdown-item @(_order == OrderBy.Standard ? "is-active": "")" @onclick="() => SetOrder(OrderBy.Standard)">
+                                        Standard
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="control">
+                    <button class="button is-light" @onclick="ToggleDescending">
+                        <span class="icon">
+                            <i class="fa @(_descending ? "fa-sort-amount-up" : "fa-sort-amount-down")"></i>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="level-right">
+        <div class="level-item">
+            <a class="button is-link is-circle" href="/@LinkPrefix/add">
+                <span class="icon">
+                    <i class="fa fa-plus"></i>
+                </span>
+            </a>
+        </div>
+    </div>
+</div>
+@if (!_initialized)
+{
+    <div class="buttons is-centered">
+        <button class="button is-white is-loading"></button>
+    </div>
+}
+else
+{
+    <div class="table-container mb-6">
+        <table class="table is-fullwidth is-striped is-spaced is-borderless">
+            <colgroup>
+                @if (Options.ShowName)
+                {
+                    <col>
+                }
+                @if (Options.ShowMath)
+                {
+                    <col style="width: 1%; white-space: nowrap;">
+                }
+                @if (Options.ShowUnit)
+                {
+                    <col style="width: 1%; white-space: nowrap;">
+                }
+                @if (Options.ShowDesc)
+                {
+                    <col>
+                }
+                @if (Options.ShowState)
+                {
+                    <col style="width: 1%; white-space: nowrap;">
+                }
+                @if (Options.ShowStandard)
+                {
+                    <col style="width: 1%; white-space: nowrap;">
+                }
+                @if (Options.ShowDate)
+                {
+                    <col style="width: 1%; white-space: nowrap;">
+                }
+            </colgroup>
+            <thead>
+                <tr>
+                    @if (Options.ShowName)
+                    {
+                        <th>Name</th>
+                    }
+                    @if (Options.ShowMath)
+                    {
+                        <th>Symbol</th>
+                    }
+                    @if (Options.ShowUnit)
+                    {
+                        <th>Unit</th>
+                    }
+                    @if (Options.ShowDesc)
+                    {
+                        <th>Description</th>
+                    }
+                    @if (Options.ShowState)
+                    {
+                        <th>State</th>
+                    }
+                    @if (Options.ShowStandard)
+                    {
+                        <th>Standard</th>
+                    }
+                    @if (Options.ShowDate)
+                    {
+                        <th>Date</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var item in _items)
+                {
+                    <tr>
+                        @if (Options.ShowName)
+                        {
+                            <td class="is-250">
+                                <div class="has-ellipsis">
+                                    <a href="/@LinkPrefix/edit/@item.Id">@item.Name</a>
+                                </div>
+                            </td>
+                        }
+                        @if (Options.ShowMath)
+                        {
+                            <td>$@((item as IVariable).Math)$</td>
+                        }
+                        @if (Options.ShowUnit)
+                        {
+                            <td>
+                                @{
+                                    var measurable = item as IMeasurable;
+                                    if (measurable.Unit != UnitType.None)
+                                    {
+                                        <span class="tag is-dark">$\mathrm{@measurable.Unit.GetDescription()}$</span>
+                                    }
+                                }
+                            </td>
+                        }
+                        @if (Options.ShowDesc)
+                        {
+                            <td>@item.GetDesc()</td>
+                        }
+                        @if (Options.ShowState)
+                        {
+                            <td>
+                                @if (item.State == StateType.Current)
+                                {
+                                    <span class="tag is-success">@item.State</span>
+                                }
+                                else if (item.State == StateType.Superseded)
+                                {
+                                    <span class="tag is-warning">@item.State</span>
+                                }
+                                else
+                                {
+                                    <span class="tag is-danger">@item.State</span>
+                                }
+                            </td>
+                        }
+                        @if (Options.ShowStandard)
+                        {
+                            <td>
+                                @if (item.Standard != null)
+                                {
+                                    <span class="tags has-addons">
+                                        <span class="tag is-dark">@item.Standard.StandardType</span>
+                                        @if (item.Standard.State == StateType.Current)
+                                        {
+                                            <span class="tag is-success">@item.Standard.State</span>
+                                        }
+                                        else if (item.Standard.State == StateType.Superseded)
+                                        {
+                                            <span class="tag is-warning">@item.Standard.State</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="tag is-danger">@item.Standard.State</span>
+                                        }
+                                    </span>
+                                }
+                            </td>
+                        }
+                        @if (Options.ShowDate)
+                        {
+                            <td>@item.Updated.ToString("dd/MM/yy")</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <PaginationComponent Total="_count" ChangePage="ChangePage"></PaginationComponent>
+}
+@code {
+
+    // Parameters
+
+    [Parameter]
+    public TableOptions Options { get; set; }
+
+    [Parameter]
+    public string LinkPrefix { get; set; }
+
+    // Fields
+
+    private bool _initialized;
+
+    private bool _descending;
+
+    private OrderBy _order;
+
+    // Constructors
+
+    public TableComponent()
+    {
+        Options = new TableOptions();
+
+        _items = new List<T>();
+    }
+
+    // Events
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await GetItemsAsync();
+
+            if (Options.ShowMath || Options.ShowUnit)
+            {
+                await Js.InvokeVoidAsync("ReloadMath");
+            }
+
+            _initialized = true;
+
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await GetItemsAsync();
+    }
+
+    // Methods - overrides
+
+    protected override async Task GetItemsAsync()
+    {
+        _count = await new GetCountQuery<T>(ContextFactory)
+            .WithFilters(GetFilters())
+            .Execute();
+
+        var items = await new GetCollectionQuery<T>(ContextFactory)
+            .WithFilters(GetFilters())
+            .WithIncludes("Standard")
+            .WithOrder(GetOrder())
+            .WithSkip(_skip)
+            .WithTake(_take)
+            .Execute();
+
+        await CheckPageIsValidAndLoadItems(items);
+
+        if (Options.ShowMath)
+        {
+            await Js.InvokeVoidAsync("ReloadMath");
+            StateHasChanged();
+        }
+    }
+
+    protected override Func<IQueryable<T>, IOrderedQueryable<T>> GetOrder()
+    {
+        if (_order == OrderBy.Name)
+        {
+            return query => _descending
+                ? query.OrderByDescending(x => x.Name)
+                : query.OrderBy(x => x.Name);
+        }
+
+        if (_order == OrderBy.Desc)
+        {
+            return query => _descending
+                ? query.OrderByDescending(x => x.Desc)
+                : query.OrderBy(x => x.Desc);
+        }
+
+        if (_order == OrderBy.Math)
+        {
+            return query => _descending
+                ? query.OrderByDescending(x => (x as IVariable).Math)
+                : query.OrderBy(x => (x as IVariable).Math);
+        }
+
+        if (_order == OrderBy.Unit)
+        {
+            return query => _descending
+                ? query.OrderByDescending(x => (x as IMeasurable).Unit)
+                : query.OrderBy(x => (x as IMeasurable).Unit);
+        }
+
+        if (_order == OrderBy.State)
+        {
+            return query => _descending
+                ? query.OrderByDescending(x => x.State)
+                : query.OrderBy(x => x.State);
+        }
+
+        if (_order == OrderBy.Standard)
+        {
+            return query => _descending
+                ? query.OrderByDescending(x => x.Standard.StandardType)
+                    .ThenByDescending(x => x.Standard.State)
+                    .ThenByDescending(x => x.Standard.Code)
+
+                : query.OrderBy(x => x.Standard.StandardType)
+                    .ThenBy(x => x.Standard.State)
+                    .ThenBy(x => x.Standard.Code);
+        }
+
+        return query => _descending
+            ? query.OrderByDescending(x => x.Updated)
+            : query.OrderBy(x => x.Updated);
+    }
+
+    // Methods
+
+    private async Task EmptySearchTerm()
+    {
+        _searchTerm = "";
+
+        await GetItemsAsync();
+    }
+
+    private async Task ToggleDescending()
+    {
+        _descending = !_descending;
+
+        await GetItemsAsync();
+    }
+
+    private async Task SetOrder(OrderBy order)
+    {
+        _order = order;
+
+        await GetItemsAsync();
+    }
+
+    private Expression<Func<T, bool>>[] GetFilters()
+    {
+        var filters = new List<Expression<Func<T, bool>>>();
+
+        if (!string.IsNullOrWhiteSpace(_searchTerm))
+        {
+            string st = _searchTerm.ToLower();
+
+            if (Options.ShowMath)
+            {
+                filters.Add(x =>
+                    (x as IVariable).Math.ToLower().Contains(st) ||
+                    (x as IVariable).Code.ToLower().Contains(st));
+            }
+
+            if (Options.ShowStandard)
+            {
+                filters.Add(x =>
+                    x.Standard.Name.ToLower().Contains(st) ||
+                    x.Standard.Code.ToLower().Contains(st) ||
+                    x.Standard.Desc.ToLower().Contains(st));
+            }
+
+            filters.Add(x =>
+                    x.Name.ToLower().Contains(st) ||
+                    x.Desc.ToLower().Contains(st));
+        }
+
+        return filters.ToArray();
+    }
+
+    private async Task Search(KeyboardEventArgs e)
+    {
+        if (_loading)
+            return;
+
+        _loading = true;
+
+        try
+        {
+            await GetItemsAsync();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    // Classes
+
+    public class TableOptions
+    {
+        public bool ShowStandard { get; set; } = true;
+
+        public bool ShowState { get; set; } = true;
+
+        public bool ShowUnit { get; set; } = true;
+
+        public bool ShowName { get; set; } = true;
+
+        public bool ShowDesc { get; set; } = true;
+
+        public bool ShowDate { get; set; } = true;
+
+        public bool ShowMath { get; set; } = true;
+    }
+
+}

@@ -1,0 +1,614 @@
+﻿@page "/variables/add"
+
+@using CodeBuilder.Bases
+@using CodeBuilder.Code
+@using CodeBuilder.Components
+@using CodeBuilder.Models
+@using CodeBuilder.Operations.Queries
+@using CodeBuilder.Operations.Commands
+@using CodeBuilder.Parsers
+@using CodeBuilder.Services
+@using NCalc
+
+@inherits BaseComponent
+@inject DisplaySettingsService Settings
+@inject IJSRuntime Js
+
+<section class="section">
+    <div class="container @(Settings.Expand ? "is-fluid" : "")">
+        <div class="columns is-centered">
+            <div class="column @(Settings.Expand ? "" : "is-8")">
+                <div class="mb-6">
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <h3 class="title is-3">Add Calculation</h3>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <a class="button is-light is-circle" href="/variables">
+                                    <span class="icon">
+                                        <i class="fa fa-times"></i>
+                                    </span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- # Basics -->
+                <IModelComponent Item="_calculation"></IModelComponent>
+                <IVariableComponent Item="_calculation"></IVariableComponent>
+                <IMeasurableComponent Item="_calculation"></IMeasurableComponent>
+                <IStandardizedComponent Item="_calculation"></IStandardizedComponent>
+                <div class="level is-mobile my-6">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <div class="field is-horizontal">
+                                <div class="field-label">
+                                    <label class="label is-normal">Calculated?</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control">
+                                            <input id="isCalculated" name="isCalculated" type="checkbox" class="switch is-rounded" @bind="_view.IsCalculated">
+                                            <label for="isCalculated">&nbsp;</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="level-right"></div>
+                    </div>
+                </div>
+                @if (_view.IsCalculated)
+                {
+                    <!-- # Calculation -->
+                    <div class="box px-6 py-6">
+                        <div class="level is-mobile">
+                            <div class="level-left">
+                                <div class="level-item">
+                                    <span class="icon is-small">
+                                        <i class="fa fa-calculator"></i>
+                                    </span>
+                                </div>
+                                <div class="level-item">
+                                    <h4 class="label">Calculation</h4>
+                                </div>
+                            </div>
+                            <div class="level-right">
+                                <div class="level-item">
+                                    <button class="button is-small is-white is-circle">
+                                        <span class="icon">
+                                            <i class="fa fa-question"></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field mb-5">
+                            <label class="heading">MathJax Input</label>
+                            <div class="control">
+                                <input class="input" type="text" @bind="_calculation.MathCalculation" @bind:event="oninput" @onchange="CalculationChanged" />
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label class="heading">MathJax Output</label>
+                            <div class="control">
+                                <div class="box is-shadowless has-background-light has-text-centered">
+                                    <img src="@($"http://latex.codecogs.com/gif.latex?{_calculation.MathCalculation}")" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- # Variables -->
+                    <div class="box px-6 py-6">
+                        <div class="level is-mobile">
+                            <div class="level-left">
+                                <div class="level-item">
+                                    <span class="icon is-small">
+                                        <i class="fa fa-subscript"></i>
+                                    </span>
+                                </div>
+                                <div class="level-item">
+                                    <h4 class="label">Variables</h4>
+                                </div>
+                            </div>
+                            <div class="level-right">
+                                <div class="level-item">
+                                    <button class="button is-small is-white is-circle">
+                                        <span class="icon">
+                                            <i class="fa fa-question"></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        @if (_view.VariablesLoading)
+                        {
+                            <div class="has-text-centered">
+                                <span class="icon">
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                </span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-container" style="padding-right: 1px; padding-bottom: 3px;">
+                                <table class="table is-fullwidth is-hoverable is-narrow is-striped is-borderless has-text-centered">
+                                    <colgroup>
+                                        <col style="width: 1%; border-right: 1px solid #dbdbdb">
+                                        <col style="width: 150px; border-right: 1px solid #dbdbdb">
+                                        <col style="border-right: 1px solid #dbdbdb">
+                                        <col style="width: 100px; border-right: 1px solid #dbdbdb">
+                                        <col style="width: 1%; white-space: nowrap; border-right: 1px solid #dbdbdb">
+                                        <col style="border-right: 1px solid #dbdbdb">
+                                        <col style="width: 1%; white-space: nowrap;">
+                                        <col style="width: 1%; white-space: nowrap;">
+                                    </colgroup>
+                                    <thead>
+                                        <tr class="has-background-dark has-text-light">
+                                            <th></th>
+                                            <th>Symbol</th>
+                                            <th>Name</th>
+                                            <th>Value</th>
+                                            <th>Unit</th>
+                                            <th>Description</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                        @foreach (var record in _records)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <span class="icon">
+                                                        <i class="fa @(record.Existing ? "fa-database" : "fa-plus") fa-sm"></i>
+                                                    </span>
+                                                </td>
+                                                <td class="has-input">
+                                                    <input class="input" type="text" value="@record.Variable.Math" @onchange="(e) => VariableSymbolChanged(e, record)" />
+                                                </td>
+                                                <td class="has-input">
+                                                    <input class="input has-text-left" type="text" value="@record.Variable.Name" @onchange="(e) => VariableNameChanged(e, record)" />
+                                                </td>
+                                                <td class="has-input">
+                                                    <input class="input" type="text" value="@record.Variable.Value" @onchange="(e) => VariableValueChanged(e, record)" />
+                                                </td>
+                                                <td class="has-input">
+                                                    <div class="select">
+                                                        <select @onchange="(e) => VariableUnitChanged(e, record)">
+                                                            @foreach (UnitType ut in Enum.GetValues(typeof(UnitType)))
+                                                            {
+                                                                if (ut == record.Variable.Unit)
+                                                                {
+                                                                    <option value="@ut" selected>@ut.GetDescription()</option>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <option value="@ut">@ut.GetDescription()</option>
+                                                                }
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                </td>
+                                                <td class="has-input">
+                                                    <input class="input has-text-left" type="text" value="@record.Variable.Desc" @onchange="(e) => VariableDescriptionChanged(e, record)" />
+                                                </td>
+                                                <td class="has-input">
+                                                    <button class="button is-danger is-inverted is-radiusless" style="height: inherit; width: inherit;" @onclick="() => VariableRemove(record)">
+                                                        <span class="icon is-small">
+                                                            <i class="fa fa-times"></i>
+                                                        </span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                    <!-- #Validate -->
+                    <div class="box px-6 py-6">
+                        <div class="level is-mobile">
+                            <div class="level-left">
+                                <div class="level-item">
+                                    <span class="icon is-small">
+                                        <i class="fa fa-check"></i>
+                                    </span>
+                                </div>
+                                <div class="level-item">
+                                    <h4 class="label">Validate</h4>
+                                </div>
+                            </div>
+                            <div class="level-right">
+                                <div class="level-item">
+                                    <button class="button is-small is-white is-circle">
+                                        <span class="icon">
+                                            <i class="fa fa-question"></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="columns is-mobile">
+                            <div class="column is-3">
+                                <div class="field">
+                                    <label class="heading">Calculation Result</label>
+                                    <div class="control has-icons-right">
+                                        <input class="input has-background-light is-borderless is-shadowless" type="text" value="@_view.CalculationResult">
+                                        <span class="icon is-right @(_view.CalculationValid ? "has-text-success" : "")">
+                                            <i class="fa fa-check-circle"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="column">
+                                <div class="field">
+                                    <label class="heading">&nbsp;</label>
+                                    <div class="control">
+                                        <button class="button is-link is-light @(_view.CheckLoading ? "is-loading" : "")" @onclick="CheckClicked">
+                                            <span class="icon">
+                                                <i class="fa fa-play"></i>
+                                            </span>
+                                            <span>Check</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                <!-- #Buttons -->
+                <div class="buttons is-right">
+                    <button class="button is-link is-light">
+                        <span class="icon">
+                            <i class="fa fa-code"></i>
+                        </span>
+                        <span>Preview</span>
+                    </button>
+                    <button class="button is-link" @onclick="Save">
+                        <span class="icon">
+                            <i class="fa fa-save"></i>
+                        </span>
+                        <span>Save</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    // Fields
+
+    private List<VariableViewModel> _records;
+
+    private List<StandardModel> _standards;
+
+    private VariableModel _calculation;
+
+    private ViewModel _view;
+
+    // Constructors
+
+    public VariablesAddPage()
+    {
+        _records = new List<VariableViewModel>();
+
+        _standards = new List<StandardModel>();
+
+        _calculation = new VariableModel();
+
+        _view = new ViewModel();
+    }
+
+    // Events
+
+    private async Task CalculationChanged(ChangeEventArgs e)
+    {
+        await FindVariables();
+    }
+
+    private async Task CheckClicked(EventArgs e)
+    {
+        await CheckCalculation();
+    }
+
+    // Events - general controls
+
+    private async Task Save()
+    {
+        _calculation.Code = _calculation.Math?.Replace("{", "");
+        _calculation.Code = _calculation.Math?.Replace("}", "");
+        _calculation.Code = _calculation.Math?.Trim();
+
+        var variables = _records.Select(x => x.Variable);
+
+        if (!await new AttachCommand<VariableModel>(ContextFactory, _calculation).Execute())
+        {
+            return;
+        }
+
+        foreach (var variable in variables.Where(x => x.Id == Guid.Empty))
+        {
+            await new CreateCommand<VariableModel>(ContextFactory, variable).Execute();
+        }
+
+        foreach (var variable in variables)
+        {
+            await new CreateCommand<VariableInputModel>(
+                ContextFactory, new() { CalculationId = _calculation.Id, InputId = variable.Id }).Execute();
+        }
+
+        Nav.NavigateTo("/variables");
+    }
+
+    // Events - variable controls
+
+    private void VariableSymbolChanged(ChangeEventArgs e, VariableViewModel model)
+    {
+        if (GetValue(e, out string value))
+        {
+            model.Variable.Math = value;
+            model.Existing = false;
+        }
+    }
+
+    private void VariableNameChanged(ChangeEventArgs e, VariableViewModel model)
+    {
+        if (GetValue(e, out string value))
+        {
+            model.Variable.Name = value;
+            model.Existing = false;
+        }
+    }
+
+    private void VariableValueChanged(ChangeEventArgs e, VariableViewModel model)
+    {
+        if (GetValue(e, out string value))
+        {
+            model.Variable.Value = value;
+            model.Existing = false;
+        }
+    }
+
+    private void VariableUnitChanged(ChangeEventArgs e, VariableViewModel model)
+    {
+        if (GetValue(e, out UnitType value))
+        {
+            model.Variable.Unit = value;
+            model.Existing = false;
+        }
+    }
+
+    private void VariableDescriptionChanged(ChangeEventArgs e, VariableViewModel model)
+    {
+        if (GetValue(e, out string value))
+        {
+            model.Variable.Desc = value;
+            model.Existing = false;
+        }
+    }
+
+    private void VariableRemove(VariableViewModel model)
+    {
+        _records.Remove(model);
+    }
+
+    // Events - standard controls
+
+    private async Task StandardSearch(KeyboardEventArgs e)
+    {
+        if (_view.StandardsLoading)
+            return;
+
+        if (_view.StandardSearchTerm.Length < 2)
+        {
+            _standards.Clear();
+            return;
+        }
+
+        try
+        {
+            await StartStandardsLoading();
+
+            _standards = (await new GetCollectionQuery<StandardModel>(ContextFactory)
+                .WithFilters(x =>
+                    x.Name.Contains(_view.StandardSearchTerm) ||
+                    x.Desc.Contains(_view.StandardSearchTerm) ||
+                    x.Code.Contains(_view.StandardSearchTerm))
+                .Execute())
+                .ToList();
+        }
+        finally
+        {
+            _view.StandardsLoading = false;
+        }
+    }
+
+    private async Task StartStandardsLoading()
+    {
+        _view.StandardsLoading = true;
+
+        await Task.Delay(10);
+
+        StateHasChanged();
+    }
+
+    private void StandardSelected(StandardModel standard)
+    {
+        _calculation.Standard = standard;
+        _view.StandardSearchTerm = "";
+        _standards.Clear();
+    }
+
+    private void RemoveStandard()
+    {
+        _calculation.Standard = null;
+    }
+
+    // Methods
+
+    private async Task FindVariables()
+    {
+        if (string.IsNullOrWhiteSpace(_calculation.MathCalculation))
+        {
+            return;
+        }
+
+        if (!MathVariableExtractor.Extract(_calculation.MathCalculation, out List<VariableModel> variables))
+        {
+            return;
+        }
+
+        await StartVariableLoading();
+
+        try
+        {
+            foreach (var variable in variables)
+            {
+                if (!await MatchingDatabaseVariable(variable))
+                {
+                    if (_records.Any(x => x.Variable.Math == variable.Math))
+                        continue;
+
+                    _records.Add(new VariableViewModel(false, variable as VariableModel));
+                }
+            }
+
+            _calculation.CodeCalculation = MathParser.Parse(_calculation.MathCalculation, variables);
+        }
+        finally
+        {
+            _view.VariablesLoading = false;
+        }
+    }
+
+    private async Task<bool> MatchingDatabaseVariable(IVariable variable)
+    {
+        var matches = await new GetCollectionQuery<VariableModel>(ContextFactory)
+                    .WithFilters(x => x.Math == variable.Math || x.Code == variable.Code)
+                    .Execute();
+
+        bool matchAdded = false;
+
+        foreach (var match in matches)
+        {
+            if (!_records.Any(x => x.Variable.Math == match.Math))
+            {
+                _records.Add(new VariableViewModel(true, match));
+                matchAdded = true;
+            }
+        }
+
+        return matchAdded;
+    }
+
+    private async Task StartVariableLoading()
+    {
+        _view.VariablesLoading = true;
+
+        StateHasChanged();
+
+        await Task.Delay(500);
+    }
+
+    private async Task CheckCalculation()
+    {
+        if (string.IsNullOrWhiteSpace(_calculation.CodeCalculation))
+        {
+            return;
+        }
+
+        await StartCheckLoading();
+
+        try
+        {
+            string calculation = _calculation.CodeCalculation;
+
+            foreach (var variable in _records.Select(x => x.Variable))
+            {
+                if (string.IsNullOrWhiteSpace(variable.Code))
+                    continue;
+
+                calculation = calculation.Replace(variable.Code, variable.Value);
+            }
+
+            try
+            {
+                if (double.TryParse(_calculation.Value, out double value))
+                {
+                    string result = new Expression(calculation).Evaluate().ToString();
+
+                    if (double.TryParse(result, out double asDouble))
+                        _view.CalculationResult = asDouble;
+
+                    if (int.TryParse(result, out int asInt))
+                        _view.CalculationResult = asInt;
+
+                    _view.CalculationValid = Math.Abs(_view.CalculationResult - value) < 0.001;
+                }
+            }
+            catch
+            {
+                _view.CalculationValid = false;
+            }
+        }
+        finally
+        {
+            _view.CheckLoading = false;
+        }
+    }
+
+    private async Task StartCheckLoading()
+    {
+        _view.CheckLoading = true;
+
+        StateHasChanged();
+
+        await Task.Delay(500);
+    }
+
+    // View models
+
+    private class VariableViewModel
+    {
+        // Properties
+
+        public VariableModel Variable { get; set; }
+
+        public bool Existing { get; set; }
+
+        // Constructors
+
+        public VariableViewModel(bool existing, VariableModel variable)
+        {
+            Existing = existing;
+            Variable = variable;
+        }
+    }
+
+    private class ViewModel
+    {
+        // Properties
+
+        public string StandardSearchTerm { get; set; }
+
+        public double CalculationResult { get; set; }
+
+        public bool CalculationValid { get; set; }
+
+        public bool VariablesLoading { get; set; }
+
+        public bool StandardsLoading { get; set; }
+
+        public bool CheckLoading { get; set; }
+
+        public bool IsCalculated { get; set; }
+    }
+
+
+}

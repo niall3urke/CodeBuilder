@@ -1,0 +1,355 @@
+﻿@page "/variable-groups/edit/{id:guid}"
+
+@using CodeBuilder.Bases
+@using CodeBuilder.Code
+@using CodeBuilder.Components
+@using CodeBuilder.Models
+@using CodeBuilder.Operations.Queries
+@using CodeBuilder.Operations.Commands
+@using CodeBuilder.Parsers
+@using CodeBuilder.Services
+@using NCalc
+
+@inherits BaseComponent
+@inject DisplaySettingsService Settings
+@inject IJSRuntime Js
+
+<section class="section">
+    <div class="container @(Settings.Expand ? "is-fluid" : "")">
+        <div class="columns is-centered">
+            <div class="column @(Settings.Expand ? "" : "is-8")">
+                <div class="mb-6">
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <h3 class="title is-3">Add Model</h3>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <a class="button is-light is-circle" href="/variable-groups">
+                                    <span class="icon">
+                                        <i class="fa fa-times"></i>
+                                    </span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- # Basics -->
+                <IModelComponent Item="_model"></IModelComponent>
+                <IStandardizedComponent Item="_model"></IStandardizedComponent>
+                <!-- # Variables -->
+                <div class="box px-6 py-6">
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <span class="icon is-small">
+                                    <i class="fa fa-subscript"></i>
+                                </span>
+                            </div>
+                            <div class="level-item">
+                                <h4 class="label">Variables</h4>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <button class="button is-small is-white is-circle">
+                                    <span class="icon">
+                                        <i class="fa fa-question"></i>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="columns">
+                        <div class="column is-6">
+                            <SearchComponent T="VariableModel" CreateNew="CreateVariable" IncludeStandard="true" ItemClicked="VariableSelected"></SearchComponent>
+                        </div>
+                    </div>
+                    @if (_records.Count() > 0)
+                    {
+                        <div class="table-container" style="padding-right: 1px; padding-bottom: 3px;">
+                            <table class="table is-fullwidth is-hoverable is-narrow is-striped is-borderless has-text-centered">
+                                <colgroup>
+                                    <col style="width: 1%; border-right: 1px solid #dbdbdb">
+                                    <col style="width: 150px; border-right: 1px solid #dbdbdb">
+                                    <col style="border-right: 1px solid #dbdbdb">
+                                    <col style="width: 100px; border-right: 1px solid #dbdbdb">
+                                    <col style="width: 1%; white-space: nowrap; border-right: 1px solid #dbdbdb">
+                                    <col style="border-right: 1px solid #dbdbdb">
+                                    <col style="width: 1%; white-space: nowrap;">
+                                    <col style="width: 1%; white-space: nowrap;">
+                                </colgroup>
+                                <thead>
+                                    <tr class="has-background-dark has-text-light">
+                                        <th></th>
+                                        <th>Symbol</th>
+                                        <th>Name</th>
+                                        <th>Value</th>
+                                        <th>Unit</th>
+                                        <th>Description</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                    @foreach (var record in _records)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <span class="icon">
+                                                    <i class="fa @(record.Existing ? "fa-database" : "fa-plus") fa-sm"></i>
+                                                </span>
+                                            </td>
+                                            <td class="has-input">
+                                                <input class="input" type="text" value="@record.Variable.Math" @onchange="(e) => VariableSymbolChanged(e, record)" />
+                                            </td>
+                                            <td class="has-input">
+                                                <input class="input has-text-left" type="text" value="@record.Variable.Name" @onchange="(e) => VariableNameChanged(e, record)" />
+                                            </td>
+                                            <td class="has-input">
+                                                <input class="input" type="text" value="@record.Variable.Value" @onchange="(e) => VariableValueChanged(e, record)" />
+                                            </td>
+                                            <td class="has-input">
+                                                <div class="select">
+                                                    <select @onchange="(e) => VariableUnitChanged(e, record)">
+                                                        @foreach (UnitType ut in Enum.GetValues(typeof(UnitType)))
+                                                        {
+                                                            if (ut == record.Variable.Unit)
+                                                            {
+                                                                <option value="@ut" selected>@ut.GetDescription()</option>
+                                                            }
+                                                            else
+                                                            {
+                                                                <option value="@ut">@ut.GetDescription()</option>
+                                                            }
+                                                        }
+                                                    </select>
+                                                </div>
+                                            </td>
+                                            <td class="has-input">
+                                                <input class="input has-text-left" type="text" value="@record.Variable.Desc" @onchange="(e) => VariableDescriptionChanged(e, record)" />
+                                            </td>
+                                            <td class="has-input">
+                                                <button class="button is-danger is-inverted is-radiusless" style="height: inherit; width: inherit;" @onclick="() => VariableRemove(record)">
+                                                    <span class="icon is-small">
+                                                        <i class="fa fa-times"></i>
+                                                    </span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+                <IMetaComponent Item="_model"></IMetaComponent>
+                <!-- #Buttons -->
+                <div class="level">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <button class="button is-danger is-outlined" @onclick="Delete">
+                                <span class="icon">
+                                    <i class="fa fa-trash"></i>
+                                </span>
+                                <span>Delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <div class="buttons is-right">
+                                <button class="button is-link is-light">
+                                    <span class="icon">
+                                        <i class="fa fa-code"></i>
+                                    </span>
+                                    <span>Preview</span>
+                                </button>
+                                <button class="button is-link" @onclick="Save">
+                                    <span class="icon">
+                                        <i class="fa fa-save"></i>
+                                    </span>
+                                    <span>Save</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+
+    // Parameters
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    // Fields
+
+    private List<VariableViewModel> _records;
+
+    private VariableGroupModel _model;
+
+    // Constructors
+
+    public VariableGroupsEditPage()
+    {
+        _records = new List<VariableViewModel>();
+
+        _model = new VariableGroupModel();
+    }
+
+    // Events
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await GetItemFromDatabase())
+        {
+            GetVariableRecords();
+        }
+    }
+
+    private async Task<bool> GetItemFromDatabase()
+    {
+        _model = await new GetQuery<VariableGroupModel>(ContextFactory)
+            .WithIncludes("Standard", "Children", "Children.Variable")
+            .WithId(Id)
+            .Execute();
+
+        return _model != null;
+    }
+
+    private void GetVariableRecords()
+    {
+        if (_model.Children != null)
+        {
+            foreach (var cv in _model.Children)
+            {
+                _records.Add(new VariableViewModel(true, cv.Variable));
+            }
+        }
+    }
+
+    // Events - general controls
+
+    private async Task Save()
+    {
+        var variables = _records.Select(x => x.Variable);
+
+        if (await new UpdateVariableGroupCommand(ContextFactory, _model, variables).Execute())
+        {
+            Nav.NavigateTo("/variable-groups");
+        }
+    }
+
+    // Events - variable controls
+
+    private void VariableSymbolChanged(ChangeEventArgs e, VariableViewModel model)
+    {
+        if (GetValue(e, out string value))
+        {
+            model.Variable.Math = value;
+            model.Existing = false;
+        }
+    }
+
+    private void VariableNameChanged(ChangeEventArgs e, VariableViewModel model)
+    {
+        if (GetValue(e, out string value))
+        {
+            model.Variable.Name = value;
+            model.Existing = false;
+        }
+    }
+
+    private void VariableValueChanged(ChangeEventArgs e, VariableViewModel model)
+    {
+        if (GetValue(e, out string value))
+        {
+            model.Variable.Value = value;
+            model.Existing = false;
+        }
+    }
+
+    private void VariableUnitChanged(ChangeEventArgs e, VariableViewModel model)
+    {
+        if (GetValue(e, out UnitType value))
+        {
+            model.Variable.Unit = value;
+            model.Existing = false;
+        }
+    }
+
+    private void VariableDescriptionChanged(ChangeEventArgs e, VariableViewModel model)
+    {
+        if (GetValue(e, out string value))
+        {
+            model.Variable.Desc = value;
+            model.Existing = false;
+        }
+    }
+
+    private void VariableRemove(VariableViewModel model)
+    {
+        _records.Remove(model);
+    }
+
+    // Events - variable search controls
+
+    private void CreateVariable()
+    {
+        _records.Add(new VariableViewModel(false, new VariableModel()));
+    }
+
+    private void VariableSelected(VariableModel variable)
+    {
+        _records.Add(new VariableViewModel(true, variable));
+    }
+
+    // Events - standard controls
+
+    private void StandardSelected(StandardModel standard)
+    {
+        _model.Standard = standard;
+    }
+
+    private void RemoveStandard()
+    {
+        _model.Standard = null;
+    }
+
+    private async Task Delete()
+    {
+        if (await new DeleteCommand<VariableGroupModel>(ContextFactory, _model.Id).Execute())
+        {
+            Nav.NavigateTo("/models");
+        }
+    }
+
+    // View models
+
+    private class VariableViewModel
+    {
+        // Properties
+
+        public VariableModel Variable { get; set; }
+
+        public bool Existing { get; set; }
+
+        // Constructors
+
+        public VariableViewModel(bool existing, VariableModel variable)
+        {
+            Existing = existing;
+            Variable = variable;
+        }
+    }
+
+
+}

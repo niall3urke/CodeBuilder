@@ -1,0 +1,32 @@
+public class [Code] : IDesignBrief
+    {
+
+        // Properties
+
+        public List<Section> Sections { get; set; }
+        public List<Summary> Summary { get; set; }
+        public string Title => [Name]
+
+        // Fields
+
+        [Fields]
+
+        // Constructors
+
+        public SimpleBeamDesign([Models])
+        {
+            [InitializeFields]
+
+            Summary = new List<Summary>();
+            Sections = new List<Section>();
+        }
+
+        // Methods 
+
+        public void Calculate()
+        {
+            [Calculate]
+        }
+
+
+    }

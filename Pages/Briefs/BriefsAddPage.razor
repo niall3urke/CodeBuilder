@@ -1,0 +1,273 @@
+﻿@page "/briefs/add"
+@using CodeBuilder.Bases
+@using CodeBuilder.Code
+@using CodeBuilder.Components
+@using CodeBuilder.Models.Briefs;
+@using CodeBuilder.Models;
+@using CodeBuilder.Operations.Commands
+@using CodeBuilder.Operations.Queries
+@using CodeBuilder.Services
+
+@inherits BaseComponent
+@inject DisplaySettingsService Settings
+
+<section class="section">
+    <div class="container @(Settings.Expand ? "is-fluid" : "")">
+        <div class="columns is-centered">
+            <div class="column @(Settings.Expand ? "" : "is-8")">
+                <div class="mb-6">
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <h3 class="title is-3">Add Brief</h3>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <a class="button is-light is-circle" href="/briefs">
+                                    <span class="icon">
+                                        <i class="fa fa-times"></i>
+                                    </span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <IModelComponent Item="_brief"></IModelComponent>
+                <IStandardizedComponent Item="_brief"></IStandardizedComponent>
+                <!-- Briefs -->
+                <div class="box px-6 py-6">
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <span class="icon is-small">
+                                    <i class="fa fa-file"></i>
+                                </span>
+                            </div>
+                            <div class="level-item">
+                                <h4 class="label">Briefs</h4>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <button class="button is-small is-white is-circle">
+                                    <span class="icon">
+                                        <i class="fa fa-question"></i>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="level">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <div class="field">
+                                    <div class="control">
+                                        <div class="dropdown is-fullwidth @(_view.CheckSearchResults.Count > 0 ? "is-active" : "")">
+                                            <div class="dropdown-trigger">
+                                                <div class="control has-icons-left has-icons-right">
+                                                    <input class="input" type="text" placeholder="Search..." @bind="@_view.CheckSearchTerm" @bind:event="oninput" @onkeyup="CheckSearch">
+                                                    <span class="icon is-left">
+                                                        <i class="fa fa-search"></i>
+                                                    </span>
+                                                    @if (_view.CheckLoading)
+                                                    {
+                                                        <span class="icon is-right">
+                                                            <i class="fa fa-spinner fa-spin"></i>
+                                                        </span>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <div class="dropdown-menu" role="menu">
+                                                <div class="dropdown-content">
+                                                    @foreach (var check in _view.CheckSearchResults)
+                                                    {
+                                                        <a class="dropdown-item" @onclick="() => CheckSelected(check)">
+                                                            @($"{check.Name}")
+                                                        </a>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="level-right"></div>
+                    </div>
+                    @foreach (var check in _checks.OrderBy(x => x.Index))
+                    {
+                        <div class="level">
+                            <div class="level-left">
+                                <div class="level-item">
+                                    <p>@check?.Name</p>
+
+                                </div>
+                            </div>
+                            <div class="level-right">
+                                <div class="level-item">
+                                    <button class="button is-danger is-inverted is-radiusless" style="height: inherit; width: inherit;" @onclick="() => CheckRemove(check)">
+                                        <span class="icon is-small">
+                                            <i class="fa fa-times"></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <!-- #Meta -->
+                <IMetaComponent Item="_brief"></IMetaComponent>
+                <!-- #Buttons -->
+                <div class="buttons is-right">
+                    <button class="button is-link is-light">
+                        <span class="icon">
+                            <i class="fa fa-code"></i>
+                        </span>
+                        <span>Preview</span>
+                    </button>
+                    <button class="button is-link" @onclick="Save">
+                        <span class="icon">
+                            <i class="fa fa-save"></i>
+                        </span>
+                        <span>Save</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+
+
+    // Fields
+
+    private List<BriefCheckModel> _checks;
+
+    private BriefModel _brief;
+
+    private ViewModel _view;
+
+    // Constructors
+
+    public BriefsAddPage()
+    {
+        _checks = new List<BriefCheckModel>();
+
+        _brief = new BriefModel();
+
+        _view = new ViewModel();
+    }
+
+    // Methods
+
+    private async Task Save()
+    {
+        if (!await new CreateCommand<BriefModel>(ContextFactory, _brief).Execute())
+        {
+            return;
+        }
+
+        foreach (var check in _checks)
+        {
+            await new CreateCommand<BriefCheckModel>(ContextFactory, new()
+                { 
+                    BriefId = _brief.Id, // Use this, it will have been set in the above command
+                    CheckId = check.CheckId, 
+                    Index = check.Index
+                }).Execute();
+        }
+
+        Nav.NavigateTo("/briefs");
+    }
+
+    private void CheckSelected(CheckModel check)
+    {
+        if (_checks.Any(x => x.CheckId == check.Id))
+            return;
+
+        _checks.Add(new()
+            {
+                Index = _checks.Count(),
+                BriefId = _brief.Id,
+                CheckId = check.Id,
+                Brief = _brief,
+                Check = check,
+            });
+
+        _view.CheckSearchResults.Clear();
+
+        _view.CheckSearchTerm = "";
+    }
+
+    private void CheckRemove(BriefCheckModel check)
+    {
+        _checks.Remove(check);
+    }
+
+    private async Task CheckSearch()
+    {
+        if (_view.CheckLoading)
+            return;
+
+        if (_view.CheckSearchTerm.Length < 2)
+        {
+            _view.CheckSearchResults.Clear();
+            return;
+        }
+
+        try
+        {
+            await StartCheckLoading();
+
+            _view.CheckSearchResults = (await new GetCollectionQuery<CheckModel>(ContextFactory)
+                    .WithFilters(x =>
+                        x.Code.Contains(_view.CheckSearchTerm) ||
+                        x.Name.Contains(_view.CheckSearchTerm) ||
+                        x.Desc.Contains(_view.CheckSearchTerm))
+                    .Execute())
+                    .ToList();
+
+            StateHasChanged();
+        }
+        finally
+        {
+            _view.CheckLoading = false;
+        }
+    }
+
+    private async Task StartCheckLoading()
+    {
+        _view.CheckLoading = true;
+
+        await Task.Delay(10);
+
+        StateHasChanged();
+    }
+
+    // Classes
+
+    private class ViewModel
+    {
+
+        // Properties
+
+        public List<CheckModel> CheckSearchResults { get; set; }
+
+        public string CheckSearchTerm { get; set; }
+
+        public bool CheckLoading { get; set; }
+
+        // Constructors
+
+        public ViewModel()
+        {
+            CheckSearchResults = new List<CheckModel>();
+            CheckSearchTerm = "";
+        }
+
+    }
+
+
+}

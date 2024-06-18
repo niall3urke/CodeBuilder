@@ -1,0 +1,36 @@
+﻿namespace CodeBuilder.Services.Modal
+{
+    public class ModalResult
+    {
+
+        // Properties
+
+        public Type DataType { get; }
+
+        public bool Success { get; }
+
+        public object Data { get; }
+
+        // Constructors
+
+        protected ModalResult(object data, Type resultType, bool success)
+        {
+            DataType = resultType;
+            Success = success;
+            Data = data;
+        }
+
+        // Methods
+
+        public static ModalResult OK<T>(T result) =>
+            new(result, typeof(T), true);
+
+        public static ModalResult OK() =>
+            new(default, typeof(object), true);
+
+        public static ModalResult Cancel() =>
+            new(default, typeof(object), false);
+
+
+    }
+}

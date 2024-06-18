@@ -1,0 +1,54 @@
+﻿.block {
+    border: 1px solid #fff;
+    border-radius: 6px;
+    transition: all 0.3s ease-in-out;
+    margin-bottom: 0px !important;
+}
+
+    .block:hover {
+        border: 1px solid #dbdbdb;
+    }
+
+.block-head {
+    border-radius: 6px;
+    transition: all 0.3s ease-in-out;
+}
+
+    .block-head.has-condition {
+        border-bottom-right-radius: 0px;
+        border-bottom-left-radius: 0px;
+    }
+
+.icon.can-grab {
+    cursor: grab;
+    padding-bottom: calc(0.5em - 1px);
+    padding-left: 1em;
+    padding-right: 1em;
+    padding-top: calc(0.5em - 1px);
+}
+
+.conditional-table {
+    border: 0px solid #fff;
+    border-top: 1px solid #dbdbdb;
+    border-radius: 0 0 6px 6px;
+    overflow: hidden;
+    border-collapse: unset;
+}
+
+.field.has-reveal .control .button {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.field.has-reveal:hover .control .button {
+    opacity: 1;
+}
+
+.select.has-reveal::after {
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+}
+
+.select.has-reveal:hover::after {
+    opacity: 1;
+}

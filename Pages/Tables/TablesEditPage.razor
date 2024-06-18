@@ -1,0 +1,449 @@
+﻿@page "/tables/edit/{id:guid}"
+
+@using CodeBuilder.Bases
+@using CodeBuilder.Code
+@using CodeBuilder.Components
+@using CodeBuilder.Models
+@using CodeBuilder.Operations.Queries
+@using CodeBuilder.Operations.Commands
+@using CodeBuilder.Parsers
+@using CodeBuilder.Services
+@using NCalc
+
+@inherits BaseComponent
+@inject DisplaySettingsService Settings
+@inject IJSRuntime Js
+
+<section class="section">
+    <div class="container @(Settings.Expand ? "is-fluid" : "")">
+        <div class="columns is-centered">
+            <div class="column @(Settings.Expand ? "" : "is-8")">
+                <div class="mb-6">
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <h3 class="title is-3">Add Table</h3>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <a class="button is-light is-circle" href="/tables">
+                                    <span class="icon">
+                                        <i class="fa fa-times"></i>
+                                    </span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- # Basics -->
+                <IModelComponent Item="_table"></IModelComponent>
+                <IMeasurableComponent Item="_table"></IMeasurableComponent>
+                <IStandardizedComponent Item="_table"></IStandardizedComponent>
+                <!-- Specifics -->
+                <div class="box px-6 py-6">
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <span class="icon is-small">
+                                    <i class="fa fa-cube"></i>
+                                </span>
+                            </div>
+                            <div class="level-item">
+                                <h4 class="label">Dimensions</h4>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <button class="button is-small is-white is-circle">
+                                    <span class="icon">
+                                        <i class="fa fa-question"></i>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="columns">
+                        <div class="column">
+                            <div class="field">
+                                <label class="heading">Rows</label>
+                                @if (_row == null)
+                                {
+                                    <div class="field has-addons">
+                                        <div class="control is-expanded">
+                                            <SearchTypeComponent Type="GetTypeDimensionA()" ItemClicked="SetDimensionA" IncludeStandard="true"></SearchTypeComponent>
+                                        </div>
+                                        <div class="control">
+                                            <div class="select">
+                                                <select @bind="_table.RowType">
+                                                    @foreach (TableDimensionType dt in Enum.GetValues(typeof(TableDimensionType)))
+                                                    {
+                                                        if (_table.RowType == dt)
+                                                        {
+                                                            <option value="@dt" selected>@dt.GetDescription()</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@dt">@dt.GetDescription()</option>
+                                                        }
+                                                    }
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="field has-addons">
+                                        <div class="control is-expanded">
+                                            <input class="input" type="text" value="@_row.Name" disabled />
+                                        </div>
+                                        <div class="control">
+                                            <button class="button is-light" @onclick="RemoveRow">
+                                                <span class="icon">
+                                                    <i class="fa fa-times"></i>
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="column">
+                            <div class="field">
+                                <label class="heading">Columns</label>
+                                @if (_col == null)
+                                {
+                                    <div class="field has-addons">
+                                        <div class="control is-expanded">
+                                            <SearchTypeComponent Type="GetTypeDimensionB()" ItemClicked="SetDimensionB" IncludeStandard="true"></SearchTypeComponent>
+                                        </div>
+                                        <div class="control">
+                                            <div class="select">
+                                                <select @bind="_table.ColType">
+                                                    @foreach (TableDimensionType dt in Enum.GetValues(typeof(TableDimensionType)))
+                                                    {
+                                                        if (_table.ColType == dt)
+                                                        {
+                                                            <option value="@dt" selected>@dt.GetDescription()</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@dt">@dt.GetDescription()</option>
+                                                        }
+                                                    }
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="field has-addons">
+                                        <div class="control is-expanded">
+                                            <input class="input" type="text" value="@_col.Name" disabled />
+                                        </div>
+                                        <div class="control">
+                                            <button class="button is-light" @onclick="RemoveCol">
+                                                <span class="icon">
+                                                    <i class="fa fa-times"></i>
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @if (_table.Children.Count > 0)
+                {
+                    <div class="box px-6 py-6">
+                        <div class="level is-mobile">
+                            <div class="level-left">
+                                <div class="level-item">
+                                    <span class="icon is-small">
+                                        <i class="fa fa-table"></i>
+                                    </span>
+                                </div>
+                                <div class="level-item">
+                                    <h4 class="label">Data</h4>
+                                </div>
+                            </div>
+                            <div class="level-right">
+                                <div class="level-item">
+                                    <button class="button is-small is-white is-circle">
+                                        <span class="icon">
+                                            <i class="fa fa-question"></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table container">
+                            <table class="table is-fullwidth is-hoverable is-narrow is-striped has-text-centered">
+                                <thead>
+                                    <tr>
+                                        <!-- Blank column for the row headings -->
+                                        <th></th>
+                                        @foreach (var col in _cols)
+                                        {
+                                            <th>@col.Math</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var row in _rows)
+                                    {
+                                        <tr>
+                                            <th>@row.Math</th>
+                                            @foreach (var col in _cols)
+                                            {
+                                                var data = GetData(row.Id, col.Id);
+                                                <td class="has-input">
+                                                    <input class="input" type="text" @bind="data.Value" />
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+                <!-- #Buttons -->
+                <div class="buttons is-right">
+                    <button class="button is-link is-light">
+                        <span class="icon">
+                            <i class="fa fa-code"></i>
+                        </span>
+                        <span>Preview</span>
+                    </button>
+                    <button class="button is-link" @onclick="Save">
+                        <span class="icon">
+                            <i class="fa fa-save"></i>
+                        </span>
+                        <span>Save</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+@code {
+
+    // Parameters 
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    // Fields
+
+    private IEnumerable<IVariable> _rows;
+
+    private IEnumerable<IVariable> _cols;
+
+    private IStandardized _row;
+
+    private IStandardized _col;
+
+    private TableModel _table;
+
+    // Constructors
+
+    public TablesEditPage()
+    {
+        _table = new TableModel();
+    }
+
+    // Events
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await GetItemFromDatabase())
+        {
+            await GetTableFields();
+        }
+    }
+
+    private async Task<bool> GetItemFromDatabase()
+    {
+        _table = await new GetQuery<TableModel>(ContextFactory)
+            .WithIncludes("Standard", "Children")
+            .WithId(Id)
+            .Execute();
+
+        return _table != null;
+    }
+
+
+    private async Task GetTableFields()
+    {
+        if (_table.RowId == Guid.Empty || _table.ColId == Guid.Empty)
+            return;
+
+        _row = await GetStandardizedItem(_table.RowType, _table.RowId);
+
+        _col = await GetStandardizedItem(_table.ColType, _table.ColId);
+
+        _rows = await GetRecords(_table.RowType, _table.RowId);
+
+        _cols = await GetRecords(_table.ColType, _table.ColId);
+    }
+
+    private async Task<IStandardized> GetStandardizedItem(TableDimensionType dt, Guid id)
+    {
+        IStandardized item = null;
+
+        if (dt == TableDimensionType.VariableGroup)
+        {
+            item = await new GetQuery<VariableGroupModel>(ContextFactory)
+                .WithId(id)
+                .Execute();
+        }
+        else if (dt == TableDimensionType.Variable)
+        {
+            item = await new GetQuery<VariableModel>(ContextFactory)
+                .WithId(id)
+                .Execute();
+        }
+
+        return item;
+    }
+
+    // Methods
+
+    private async Task Save()
+    {
+        // Delete the existing table data
+        var data = await new GetCollectionQuery<TableDataModel>(ContextFactory)
+            .WithFilters(x => x.TableId == _table.Id)
+            .Execute();
+
+        foreach (var record in data)
+        {
+            await new DeleteCommand<TableDataModel>(ContextFactory, record.Id).Execute();
+        }
+
+        if (!await new UpdateCommand<TableModel>(ContextFactory, _table).Execute())
+        {
+            return;
+        }
+
+        Nav.NavigateTo("/tables");
+    }
+
+    private Type GetTypeDimensionA()
+    {
+        if (_table.RowType == TableDimensionType.VariableGroup)
+            return typeof(VariableGroupModel);
+
+        return typeof(VariableModel);
+    }
+
+    private Type GetTypeDimensionB()
+    {
+        if (_table.ColType == TableDimensionType.VariableGroup)
+            return typeof(VariableGroupModel);
+
+        return typeof(VariableModel);
+    }
+
+    private async Task SetDimensionA(IStandardized item)
+    {
+        _table.RowId = item.Id;
+        _row = item;
+
+        await UpdateTable();
+    }
+
+    private async Task SetDimensionB(IStandardized item)
+    {
+        _table.ColId = item.Id;
+        _col = item;
+
+        await UpdateTable();
+    }
+
+    private async Task UpdateTable()
+    {
+        if (_table.RowId == Guid.Empty || _table.ColId == Guid.Empty)
+            return;
+
+        _rows = await GetRecords(_table.RowType, _table.RowId);
+        _cols = await GetRecords(_table.ColType, _table.ColId);
+
+        // Form the table data objects
+
+        _table.Children.Clear();
+
+        foreach (var row in _rows)
+        {
+            foreach (var col in _cols)
+            {
+                _table.Children.Add(new()
+                    {
+                        RowId = row.Id,
+                        ColId = col.Id,
+                    });
+            }
+        }
+    }
+
+    private async Task<List<IVariable>> GetRecords(TableDimensionType dt, Guid id)
+    {
+        var records = new List<IVariable>();
+
+        if (dt == TableDimensionType.VariableGroup)
+        {
+            records = (await GetVariablesFromGroup(id)).ToList();
+        }
+
+        else if (dt == TableDimensionType.Variable)
+        {
+            records.Add(await GetIVariable<VariableModel>(id));
+        }
+
+        return records;
+    }
+
+    private async Task<IEnumerable<IVariable>> GetVariablesFromGroup(Guid id)
+    {
+        var group = await new GetQuery<VariableGroupModel>(ContextFactory)
+            .WithIncludes("Children", "Children.Variable")
+            .WithId(id)
+            .Execute();
+
+        return group.Children.Select(x => x.Variable);
+    }
+
+    private async Task<IVariable> GetIVariable<T>(Guid id) where T : class, IVariable
+    {
+        var variable = await new GetQuery<T>(ContextFactory)
+            .WithId(id)
+            .Execute();
+
+        return variable;
+    }
+
+    private TableDataModel GetData(Guid rowId, Guid colId)
+    {
+        return _table.Children
+            .Where(x => x.RowId == rowId && x.ColId == colId)
+            .FirstOrDefault();
+    }
+
+    private void RemoveRow()
+    {
+        _table.RowId = Guid.Empty;
+        _row = null;
+    }
+
+    private void RemoveCol()
+    {
+        _table.ColId = Guid.Empty;
+        _col = null;
+    }
+
+
+}

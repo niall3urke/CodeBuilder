@@ -1,0 +1,198 @@
+﻿@page "/standards"
+@using CodeBuilder.Components
+@using CodeBuilder.Bases
+@using CodeBuilder.Models
+@using CodeBuilder.Services
+
+@inherits BaseComponent
+@inject DisplaySettingsService Settings
+@inject IJSRuntime Js
+
+<section class="section">
+    <div class="container @(Settings.Expand ? "is-fluid": "")">
+        @if (!_initialized)
+        {
+            <div class="buttons is-centered">
+                <button class="button is-light is-large is-loading"></button>
+            </div>
+        }
+        else
+        {
+            <div class="mb-6">
+                <div class="level is-mobile">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <h3 class="title is-3">Standards</h3>
+                        </div>
+                    </div>
+                    <div class="level-right"></div>
+                </div>
+            </div>
+            <div class="box px-6 py-6">
+                <TableComponent T="StandardModel" LinkPrefix="standards" Options="GetOptions()"></TableComponent>
+            </div>
+            @*<div class="mb-6">
+                <div class="level is-mobile">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <h3 class="title is-3">Standards</h3>
+                        </div>
+                    </div>
+                    <div class="level-right"></div>
+                </div>
+            </div>
+            <div class="box px-6 py-6">
+                <div class="level mb-6">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <div class="field">
+                                <div class="control has-icons-left">
+                                    <input class="input has-background-light is-borderless is-shadowless" type="text" placeholder="Search..." />
+                                    <span class="icon is-left">
+                                        <i class="fa fa-search"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div clas="level-item">
+                            <div class="field is-grouped">
+                                <div class="control">
+                                    <div class="dropdown is-hoverable">
+                                        <div class="dropdown-trigger">
+                                            <button class="button is-light" aria-haspopup="true" aria-controls="dropdown-menu">
+                                                <span>Sort</span>
+                                                <span class="icon is-small">
+                                                    <i class="fas fa-angle-down" aria-hidden="true"></i>
+                                                </span>
+                                            </button>
+                                        </div>
+                                        <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                                            <div class="dropdown-content">
+                                                <a class="dropdown-item">
+                                                    Name
+                                                </a>
+                                                <a class="dropdown-item is-active">
+                                                    Date
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="control">
+                                    <button class="button is-light">
+                                        <span class="icon">
+                                            <i class="fa fa-sort-amount-down"></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <a class="button is-link is-circle" href="/standards/add">
+                                <span class="icon">
+                                    <i class="fa fa-plus"></i>
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-container mb-6">
+                    <table class="table is-fullwidth is-striped is-spaced is-borderless">
+                        <colgroup>
+                            <col style="width: 1%; white-space: nowrap;">
+                            <col style="width: 1%; white-space: nowrap;">
+                            <col>
+                            <col style="width: 1%; white-space: nowrap;">
+                            <col style="width: 1%; white-space: nowrap;">
+                            <col style="width: 1%; white-space: nowrap;">
+                            <col style="width: 1%; white-space: nowrap;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th colspan="2">Code</th>
+                                <th>Name</th>
+                                <th>Published</th>
+                                <th>State</th>
+                                <th>Date</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _items)
+                            {
+                                <tr>
+                                    <td>@item.StandardType</td>
+                                    <td style="white-space: nowrap;">@item.Code</td>
+                                    <td><a href="/standards/edit/@item.Id">@item.Name</a></td>
+                                    <td>
+                                        <span class="tag">
+                                            @item.Published.ToString("dd/MM/yy")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="tag @GetStateColor(item)">
+                                            @item.State.GetDescription()
+                                        </span>
+                                    </td>
+                                    <td>@item.Updated.ToString("dd/MM/yy")</td>
+                                    <td>
+                                        <div class="buttons are-small">
+                                            <button class="button is-link">
+                                                <span class="icon">
+                                                    <i class="fa fa-edit"></i>
+                                                </span>
+                                            </button>
+                                            <button class="button is-danger">
+                                                <span class="icon">
+                                                    <i class="fa fa-trash"></i>
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <PaginationComponent Total="_count" ChangePage="ChangePage"></PaginationComponent>
+            </div>*@
+        }
+    </div>
+</section>
+
+@code {
+    // Fields
+
+    private bool _initialized;
+
+    // Constructors
+
+    public StandardsPage() { }
+
+    // Events
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Settings.Load();
+
+            _initialized = true;
+
+            StateHasChanged();
+        }
+    }
+
+    // Methods
+
+    private TableComponent<StandardModel>.TableOptions GetOptions() =>
+        new TableComponent<StandardModel>.TableOptions()
+            {
+                ShowUnit = false,
+                ShowMath = false,
+            };
+
+
+}

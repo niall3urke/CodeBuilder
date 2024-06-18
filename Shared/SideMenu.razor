@@ -1,0 +1,117 @@
+﻿@using CodeBuilder.Services.Modal
+@inject ModalService Modal
+
+<aside>
+    <ul class="side-menu is-flex @(_expand ? "is-expanded" : "")" style="flex-direction: column;">
+        <div style="flex: 1;">
+            <li>
+                <a @onclick="ToggleMenu">
+                    <span class="icon">
+                        <i class="fa @(_expand ? "fa-times" : "fa-bars")"></i>
+                    </span>
+                </a>
+            </li>
+            <li>
+                <a href="/variables">
+                    <span class="icon">
+                        <i class="fa fa-subscript"></i>
+                    </span>
+                    <span class="has-text-weight-semibold">Variables</span>
+                </a>
+            </li>
+            <li>
+                <a href="/variable-groups">
+                    <span class="icon">
+                        <i class="fa fa-cubes"></i>
+                    </span>
+                    <span class="has-text-weight-semibold">Variable Groups</span>
+                </a>
+            </li>
+            <li>
+                <a href="/tables">
+                    <span class="icon">
+                        <i class="fa fa-table"></i>
+                    </span>
+                    <span class="has-text-weight-semibold">Tabular Data</span>
+                </a>
+            </li>
+            <li>
+                <a href="/checks">
+                    <span class="icon">
+                        <i class="fa fa-check"></i>
+                    </span>
+                    <span class="has-text-weight-semibold">Checks</span>
+                </a>
+            </li>
+            <li>
+                <a href="/briefs">
+                    <span class="icon">
+                        <i class="fa fa-file-alt"></i>
+                    </span>
+                    <span class="has-text-weight-semibold">Briefs</span>
+                </a>
+            </li>
+            <li>
+                <a href="/standards">
+                    <span class="icon">
+                        <i class="fa fa-certificate"></i>
+                    </span>
+                    <span class="has-text-weight-semibold">Standards</span>
+                </a>
+            </li>
+        </div>
+        <div>
+            <li>
+                <a @onclick="ShowSettingsModal">
+                    <span class="icon">
+                        <i class="fa fa-cog"></i>
+                    </span>
+                    <span class="has-text-weight-semibold">Settings</span>
+                </a>
+            </li>
+            <li>
+                <a>
+                    <span class="icon">
+                        <i class="fa fa-user"></i>
+                    </span>
+                    <span class="has-text-weight-semibold">Profile</span>
+                </a>
+            </li>
+            <li>
+                <a>
+                    <span class="icon">
+                        <i class="fa fa-sign-out-alt"></i>
+                    </span>
+                    <span class="has-text-weight-semibold">Log out</span>
+                </a>
+            </li>
+        </div>
+    </ul>
+</aside>
+
+@code {
+
+    private bool _expand;
+
+    private void ToggleMenu()
+    {
+        _expand = !_expand;
+    }
+
+    private void ShowSettingsModal()
+    {
+        Modal.OnClose += SettingsModalClosed;
+
+        Modal.Show<ModalSettings>();
+    }
+
+    private void SettingsModalClosed(ModalResult result)
+    {
+        Modal.OnClose -= SettingsModalClosed;
+
+        if (result.Success)
+        {
+            StateHasChanged();
+        }
+    }
+}

@@ -1,0 +1,98 @@
+﻿@page "/"
+@using CodeBuilder.Services
+@inject DisplaySettingsService Settings
+
+<PageTitle>Dashboard</PageTitle>
+<section class="section">
+    <div class="container @(Settings.Expand ? "is-fluid" : "")">
+        <div class="mb-6">
+                <div class="level is-mobile">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <h3 class="title is-3">Dashboard</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <div class="columns is-multiline">
+            <div class="column is-4">
+                <div class="box">
+                    <p class="heading">
+                        <span class="icon">
+                            <i class="fa fa-calculator"></i>
+                        </span>
+                        <span>Calculations</span>
+                    </p>
+                    <p class="title is-1">1</p>
+                </div>
+            </div>
+            <div class="column is-4">
+                <div class="box">
+                    <p class="heading">
+                        <span class="icon">
+                            <i class="fa fa-check"></i>
+                        </span>
+                        <span>Checks</span>
+                    </p>
+                    <p class="title is-1">1</p>
+                </div>
+            </div>
+            <div class="column is-4">
+                <div class="box">
+                    <p class="heading">
+                        <span class="icon">
+                            <i class="fa fa-subscript"></i>
+                        </span>
+                        <span>Variables</span>
+                    </p>
+                    <p class="title is-1">1</p>
+                </div>
+            </div>
+            <div class="column is-4">
+                <div class="box">
+                    <p class="heading">
+                        <span class="icon">
+                            <i class="fa fa-cube"></i>
+                        </span>
+                        <span>Models</span>
+                    </p>
+                    <p class="title is-1">1</p>
+                </div>
+            </div>
+            <div class="column is-4">
+                <div class="box">
+                    <p class="heading">
+                        <span class="icon">
+                            <i class="fa fa-file"></i>
+                        </span>
+                        <span>Briefs</span>
+                    </p>
+                    <p class="title is-1">1</p>
+                </div>
+            </div>
+            <div class="column is-4">
+                <div class="box">
+                    <p class="heading">
+                        <span class="icon">
+                            <i class="fa fa-certificate"></i>
+                        </span>
+                        <span>Standards</span>
+                    </p>
+                    <p class="title is-1">1</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Settings.Load();
+        }
+    }
+
+}

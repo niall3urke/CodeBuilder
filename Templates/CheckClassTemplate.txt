@@ -1,0 +1,76 @@
+class [Name]
+    {
+
+        // Properties
+
+        public List<Summary> Summary { get; set; }
+
+        [Properties]
+
+        // Fields
+
+        [Fields]
+        
+        private bool hasValues;
+
+        // Constructors
+
+        public [Name]([Inputs])
+        {
+            Summary = new List<Summary>();
+            
+            [InitializeFields]
+
+            Calculate();
+        }
+
+        // Methods
+
+        private void Calculate()
+        {
+            [Calculate]
+        }
+
+        private void AddToOutput(ICalculation calc, ref List<Row> output)
+        {
+            if (calc != null)
+            {
+                output.Add(new Row(calc));
+            }
+        }
+
+        private void GetSummary()
+        {
+            [GetSummary]
+        }
+
+        // Public methods
+
+        public Section GetOutput()
+        {
+            var section = new Section();
+
+            if (hasValues)
+            {
+                // Get the summary
+                GetSummary();
+
+                // Set the title, summary and row data
+                section.Title = "[Title]";
+                section.Summary = Summary;
+
+                // Create a list of rows for the section
+                var rows = new List<Row>
+                {
+                    [Output]
+                };
+
+                // Hook up the rows list
+                section.Rows = rows;
+            }
+
+            return section;
+        }
+
+
+    }

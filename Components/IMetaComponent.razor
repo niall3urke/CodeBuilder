@@ -1,0 +1,47 @@
+﻿<div class="box px-6 py-6">
+    <div class="level is-mobile">
+        <div class="level-left">
+            <div class="level-item">
+                <span class="icon is-small">
+                    <i class="fa fa-tags"></i>
+                </span>
+            </div>
+            <div class="level-item">
+                <h4 class="label">Meta</h4>
+            </div>
+        </div>
+    </div>
+    @if (ChildContent != null)
+    {
+        @ChildContent
+        <hr />
+    }
+    <div class="field">
+        <div class="field is-grouped">
+            <div class="control">
+                <span class="tags has-addons">
+                    <span class="tag is-dark">Created</span>
+                    <span class="tag">@Item.Created.ToString("MMM dd, yyyy")</span>
+                </span>
+            </div>
+            <div class="control">
+                <span class="tags has-addons">
+                    <span class="tag is-dark">Updated</span>
+                    <span class="tag">@Item.Updated.ToString("MMM dd, yyyy")</span>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    // Parameters
+
+    [Parameter]
+    public IMeta Item { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+}

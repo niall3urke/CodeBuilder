@@ -1,0 +1,71 @@
+﻿@page "/variable-groups"
+@using CodeBuilder.Components
+@using CodeBuilder.Models
+@using CodeBuilder.Bases
+@using CodeBuilder.Services
+
+@inherits BaseComponent
+@inject DisplaySettingsService Settings
+@inject IJSRuntime Js
+
+<section class="section">
+    <div class="container @(Settings.Expand ? "is-fluid": "")">
+        @if (!_initialized)
+        {
+            <div class="buttons is-centered">
+                <button class="button is-light is-large is-loading"></button>
+            </div>
+        }
+        else
+        {
+            <div class="mb-6">
+                <div class="level is-mobile">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <h3 class="title is-3">Variable Groups</h3>
+                        </div>
+                    </div>
+                    <div class="level-right"></div>
+                </div>
+            </div>
+            <div class="box px-6 py-6">
+                <TableComponent T="VariableGroupModel" LinkPrefix="variable-groups" Options="GetOptions()"></TableComponent>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    // Fields
+
+    private bool _initialized;
+
+    // Constructors
+
+    public VariableGroupsPage() { }
+
+    // Events
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Settings.Load();
+
+            _initialized = true;
+
+            StateHasChanged();
+        }
+    }
+
+    // Methods
+
+    private TableComponent<VariableGroupModel>.TableOptions GetOptions() =>
+        new TableComponent<VariableGroupModel>.TableOptions()
+            {
+                ShowUnit = false,
+                ShowMath = false
+            };
+
+
+}

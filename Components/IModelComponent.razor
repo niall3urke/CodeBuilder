@@ -1,0 +1,71 @@
+﻿@using CodeBuilder.Bases
+@using CodeBuilder.Code
+@using CodeBuilder.Models
+
+<div class="box px-6 py-6">
+    <div class="level is-mobile">
+        <div class="level-left">
+            <div class="level-item">
+                <span class="icon is-small">
+                    <i class="fa fa-file"></i>
+                </span>
+            </div>
+            <div class="level-item">
+                <h4 class="label">Basics</h4>
+            </div>
+        </div>
+        <div class="level-right">
+            <div class="level-item">
+                <button class="button is-small is-white is-circle">
+                    <span class="icon">
+                        <i class="fa fa-question"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="field mb-5">
+        <label class="heading">Name</label>
+        <div class="control">
+            <input class="input" type="text" @bind="Item.Name">
+        </div>
+    </div>
+    <div class="field mb-5">
+        <label class="heading">Description</label>
+        <div class="control">
+            <textarea class="textarea" @bind="Item.Desc"></textarea>
+        </div>
+    </div>
+    <div class="columns">
+        <div class="column is-6">
+            <label class="heading">State</label>
+            <div class="control">
+                <div class="select is-fullwidth">
+                    <select @bind="Item.State">
+                        @foreach (StateType st in Enum.GetValues(typeof(StateType)))
+                        {
+                            if (st == Item.State)
+                            {
+                                <option value="@st" selected>@st.GetDescription()</option>
+                            }
+                            else
+                            {
+                                <option value="@st">@st.GetDescription()</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+
+    // Parameters
+
+    [Parameter]
+    public IModelBase Item { get; set; }
+
+}

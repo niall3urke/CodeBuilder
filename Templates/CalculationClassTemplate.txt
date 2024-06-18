@@ -1,0 +1,43 @@
+class [Name] : ICalculation
+    {
+
+        // Fields
+
+        [Fields]
+
+        // Constructors
+
+        public [Name]([Variables])
+        {
+            [InitializeFields]
+            
+            Calculate();
+        }
+
+        // Methods
+
+        public void Calculate()
+        {
+            [CodeCalculation]
+        }
+
+        // Properties
+
+        public string Description => [Description]
+
+        public double Value => [Code]
+
+        public string Calculation => [MathCalculation]
+
+        public string Equation => [Equation]
+
+        public string Result => [Result]
+
+        public string ResultUnits => [ResultUnits]
+
+        public string Clause => [Clause]
+
+        public Units Units => [Units]
+        
+
+    }

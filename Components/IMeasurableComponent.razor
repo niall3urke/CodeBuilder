@@ -1,0 +1,86 @@
+﻿@using CodeBuilder.Code
+<div class="box px-6 py-6">
+    <div class="level is-mobile">
+        <div class="level-left">
+            <div class="level-item">
+                <span class="icon is-small">
+                    <i class="fa fa-ruler"></i>
+                </span>
+            </div>
+            <div class="level-item">
+                <h4 class="label">Units</h4>
+            </div>
+        </div>
+        <div class="level-right">
+            <div class="level-item">
+                <button class="button is-small is-white is-circle">
+                    <span class="icon">
+                        <i class="fa fa-question"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="columns">
+        <div class="column is-6">
+            <div class="columns is-mobile">
+                <div class="column is-6">
+                    <div class="field">
+                        <label class="heading">Result Type</label>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                <select @bind="Item.Storage">
+                                    @foreach (StorageType vt in Enum.GetValues(typeof(StorageType)))
+                                    {
+                                        if (vt == Item.Storage)
+                                        {
+                                            <option value="@vt" selected>@vt.GetDescription()</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@vt">@vt.GetDescription()</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @if (Item.Storage == StorageType.Real || Item.Storage == StorageType.Integer)
+                {
+                    <div class="column is-6">
+                        <div class="field">
+                            <label class="heading">Result Unit</label>
+                            <div class="control">
+                                <div class="select is-fullwidth">
+                                    <select @bind="Item.Unit">
+                                        @foreach (UnitType ut in Enum.GetValues(typeof(UnitType)))
+                                        {
+                                            if (ut == Item.Unit)
+                                            {
+                                                <option value="@ut" selected>@ut.GetDescription()</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@ut">@ut.GetDescription()</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    // Parameters
+
+    [Parameter]
+    public IMeasurable Item { get; set; }
+
+}

@@ -1,0 +1,180 @@
+﻿@page "/standards/add"
+
+@using CodeBuilder.Bases
+@using CodeBuilder.Code
+@using CodeBuilder.Components
+@using CodeBuilder.Models
+@using CodeBuilder.Operations.Queries
+@using CodeBuilder.Operations.Commands
+@using CodeBuilder.Parsers
+@using CodeBuilder.Services
+
+@inherits BaseComponent
+@inject DisplaySettingsService Settings
+@inject IJSRuntime Js
+
+<section class="section">
+    <div class="container @(Settings.Expand ? "is-fluid" : "")">
+        <div class="columns is-centered">
+            <div class="column @(Settings.Expand ? "" : "is-8")">
+                <div class="mb-6">
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <h3 class="title is-3">Add Standard</h3>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <a class="button is-light is-circle" href="/standards">
+                                    <span class="icon">
+                                        <i class="fa fa-times"></i>
+                                    </span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- #Basics -->
+                <IModelComponent Item="_standard"></IModelComponent>
+                <!-- #Specifics -->
+                <div class="box px-6 py-6">
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <span class="icon is-small">
+                                    <i class="fa fa-file-alt"></i>
+                                </span>
+                            </div>
+                            <div class="level-item">
+                                <h4 class="label">Specifics</h4>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <button class="button is-small is-white is-circle">
+                                    <span class="icon">
+                                        <i class="fa fa-question"></i>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="columns">
+                        <div class="column">
+                            <div class="field">
+                                <label class="heading">Shortcode</label>
+                                <div class="control">
+                                    <input class="input" type="text" @bind="_standard.Code" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column">
+                            <div class="field">
+                                <label class="heading">Published</label>
+                                <div class="control">
+                                    <input class="input" type="date" @bind="_standard.Published" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="columns">
+                        <div class="column is-6">
+                            <div class="field">
+                                <label class="heading">Type</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select @bind="_standard.StandardType">
+                                            @foreach (StandardType st in Enum.GetValues(typeof(StandardType)))
+                                            {
+                                                if (st == _standard.StandardType)
+                                                {
+                                                    <option value="@st" selected>@st.GetDescription()</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@st">@st.GetDescription()</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- #Meta -->
+                <IMetaComponent Item="_standard">
+                    <div class="field">
+                        <label class="heading">ISBN</label>
+                        <div class="control">
+                            <input class="input" type="text" @bind="_standard.Isbn" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="heading">Link</label>
+                        <div class="control">
+                            <input class="input" type="text" @bind="_standard.Link" />
+                        </div>
+                    </div>
+                </IMetaComponent>
+                <!-- #Buttons -->
+                <div class="buttons is-right">
+                    <button class="button is-link @(_loading ? "is-loading" : "")" @onclick="Save">
+                        <span class="icon">
+                            <i class="fa fa-save"></i>
+                        </span>
+                        <span>Save</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code
+{
+
+    // Fields
+
+    private StandardModel _standard;
+
+    // Constructors
+
+    public StandardsAddPage()
+    {
+        _standard = new StandardModel();
+    }
+
+    // Events - general controls
+
+    private async Task Save()
+    {
+        await StartLoading();
+
+        try
+        {
+            if (await new CreateCommand<StandardModel>(ContextFactory, _standard).Execute())
+            {
+                Nav.NavigateTo("/standards");
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    // Methods
+
+    private async Task StartLoading()
+    {
+        _loading = true;
+
+        StateHasChanged();
+
+        await Task.Delay(500);
+    }
+
+
+}

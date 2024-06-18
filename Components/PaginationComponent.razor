@@ -1,0 +1,177 @@
+﻿@using Blazored.LocalStorage
+@if (showPagination)
+{
+    <div class="level is-mobile">
+        <div class="level-left"></div>
+        <div class="level-right">
+            <div class="level-item">
+                <p>Rows</p>
+            </div>
+            <div class="level-item">
+                <div class="control">
+                    <div class="select is-white">
+                        <select @onchange="TakeChange">
+                            @foreach (int value in new[] { 10, 25, 50 })
+                            {
+                                if (Take == value)
+                                {
+                                    <option value="@value" selected>@value</option>
+                                }
+                                else
+                                {
+                                    <option value="@value">@value</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="level-item">
+                <p>@RangeStart &ndash; @RangeEnd of @Total</p>
+            </div>
+            <div class="level-item">
+                <div class="buttons has-addons">
+                    <button class="button is-white" disabled="@DisablePrev" @onclick="PrevClick">
+                        <span class="icon">
+                            <i class="fa fa-chevron-left"></i>
+                        </span>
+                    </button>
+                    <button class="button is-white" disabled="@DisableNext" @onclick="NextClick">
+                        <span class="icon">
+                            <i class="fa fa-chevron-right"></i>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // Injects
+
+    [Inject]
+    public ILocalStorageService LocalStorage { get; set; }
+
+    // Parameters
+
+    [Parameter]
+    public EventCallback<PageData> ChangePage { get; set; }
+
+    [Parameter]
+    public int Total { get; set; }
+
+    // Properties
+
+    public bool DisableNext { get; set; }
+
+    public bool DisablePrev { get; set; }
+
+    public int RangeStart { get; set; }
+
+    public int RangeEnd { get; set; }
+
+    public int Page { get; set; }
+
+    public int Take { get; set; }
+
+    // Fields
+
+    private bool showPagination;
+
+    // Overrides
+
+    protected override void OnInitialized()
+    {
+        Take = 10;
+        Page = 1;
+    }
+
+    protected override void OnParametersSet()
+    {
+        int min = Math.Min(Take, Total);
+
+        RangeEnd = Math.Min(Total, Page * min);
+
+        RangeStart = (Page * min) - min + 1;
+
+        DisableNext = Page == (int)Math.Ceiling((double)Total / min);
+
+        DisablePrev = Page == 1;
+
+        showPagination = Total > 10;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Take = await LocalStorage.GetItemAsync<int>("pagination.take");
+
+            if (Take < 10)
+            {
+                Take = 10;
+            }
+
+            UpdateProperties();
+        }
+    }
+
+    // Events
+
+    private void NextClick()
+    {
+        Page++;
+        UpdateProperties();
+    }
+
+    private void PrevClick()
+    {
+        Page--;
+        UpdateProperties();
+    }
+
+    private async void TakeChange(ChangeEventArgs e)
+    {
+        if (e == null || e.Value == null)
+            return;
+
+        if (int.TryParse(e.Value.ToString(), out int value))
+        {
+            Take = value;
+
+            UpdateProperties();
+
+            await LocalStorage.SetItemAsync("pagination.take", Take);
+        }
+    }
+
+    private void UpdateProperties()
+    {
+        int min = Math.Min(Take, Total);
+
+        // If the user changes take and it's now greater
+        // than the number of items, there's only 1 page
+
+        if (Take > Total)
+        {
+            Page = 1;
+        }
+
+        RangeEnd = Math.Min(Total, Page * min);
+
+        RangeStart = (Page * min) - min + 1;
+
+
+        DisableNext = Page == (int)Math.Ceiling((double)Total / min);
+
+        DisablePrev = Page == 1;
+
+
+        showPagination = Total > 10;
+
+        ChangePage.InvokeAsync(new(Page = Page, Take = Take));
+    }
+
+    public record PageData(int Page, int Take);
+}

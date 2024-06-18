@@ -1,0 +1,15 @@
+﻿@using CodeBuilder.Components
+@inherits LayoutComponentBase
+
+<PageTitle>CodeBuilder</PageTitle>
+
+
+<div class="columns is-mobile is-marginless is-gapless">
+    <div class="column is-narrow">
+        <SideMenu />
+    </div>
+    <div class="column">
+        @Body
+    </div>
+</div>
+<ModalComponent />

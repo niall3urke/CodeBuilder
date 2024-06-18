@@ -1,0 +1,113 @@
+﻿@using CodeBuilder.Models
+<div class="box px-6 py-6">
+    <div class="level is-mobile">
+        <div class="level-left">
+            <div class="level-item">
+                <span class="icon is-small">
+                    <i class="fa fa-certificate"></i>
+                </span>
+            </div>
+            <div class="level-item">
+                <h4 class="label">Standard</h4>
+            </div>
+        </div>
+        <div class="level-right">
+            <div class="level-item">
+                <button class="button is-small is-white is-circle">
+                    <span class="icon">
+                        <i class="fa fa-question"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+    @if (Item == null)
+    {
+        <div class="buttons is-centered">
+            <button class="button is-white is-loading"></button>
+        </div>
+    }
+    else
+    {
+        <div class="columns">
+            <div class="column">
+                @if (Item.Standard == null)
+                {
+                    <div class="field">
+                        <label class="heading">Name</label>
+                        <SearchComponent T="StandardModel" ItemClicked="StandardSelected"></SearchComponent>
+                    </div>
+                }
+                else
+                {
+                    <div class="field">
+                        <label class="heading">Name</label>
+                        <div class="field has-addons">
+                            <div class="control is-expanded">
+                                <input class="input" type="text" value="@Item.Standard.Name" disabled />
+                            </div>
+                            <div class="control">
+                                <button class="button is-light" @onclick="RemoveStandard">
+                                    <span class="icon">
+                                        <i class="fa fa-times"></i>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="px-3">
+                            <a href="standards/edit/@Item.Standard.Id">
+                                @Item.Standard.Code
+                                <span class="icon">
+                                    <i class="fa fa-external-link-alt"></i>
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="column">
+                <div class="field">
+                    <label class="heading">Clause/Reference</label>
+                    <div class="control">
+                        <input class="input" type="text" @bind="Item.Reference" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+
+    // Parameters
+
+    [Parameter]
+    public IStandardized Item { get; set; }
+
+    [Parameter]
+    public EventCallback StandardChanged { get; set; }
+
+    // Events - controls
+
+    private async Task StandardSelected(StandardModel standard)
+    {
+        Item.Standard = standard;
+
+        if (StandardChanged.HasDelegate)
+        {
+            await StandardChanged.InvokeAsync();
+        }
+    }
+
+    private async Task RemoveStandard()
+    {
+        Item.Standard = null;
+
+        if (StandardChanged.HasDelegate)
+        {
+            await StandardChanged.InvokeAsync();
+        }
+    }
+
+
+}

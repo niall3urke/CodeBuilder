@@ -1,0 +1,79 @@
+﻿<div class="box px-6 py-6">
+    <div class="level is-mobile">
+        <div class="level-left">
+            <div class="level-item">
+                <span class="icon is-small">
+                    <i class="fa fa-subscript"></i>
+                </span>
+            </div>
+            <div class="level-item">
+                <h4 class="label">Variable</h4>
+            </div>
+        </div>
+        <div class="level-right">
+            <div class="level-item">
+                <button class="button is-small is-white is-circle">
+                    <span class="icon">
+                        <i class="fa fa-question"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="columns">
+        <div class="column">
+            <div class="field">
+                <label class="heading">Symbol</label>
+                <div class="control">
+                    <input class="input" type="text" @bind="Item.Math" @bind:event="oninput" />
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="field">
+                <label class="heading">Symbol Preview</label>
+                <div class="control">
+                    <div class="has-background-light has-text-centered" style="display: flex; justify-content: center; align-items: center; height: 40px; border-radius: 4px;">
+                        <img src="@($"http://latex.codecogs.com/svg.image?{Item.Math}")" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="columns">
+        <div class="column is-3">
+            <div class="field">
+                <label class="heading">Default Result</label>
+                <div class="control">
+                    <input class="input" type="text" @bind="Item.Value" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="columns">
+        <div class="column">
+            <div class="field">
+                <label class="heading">Result Summary</label>
+                <div class="control">
+                <label class="checkbox">
+                    <input type="checkbox">
+                    The variable's result is included in check summaries
+                </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    // Parameters
+
+    [Parameter]
+    public IVariable Item { get; set; }
+
+    // Events 
+
+
+
+}

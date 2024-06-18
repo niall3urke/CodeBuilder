@@ -1,0 +1,177 @@
+﻿@using CodeBuilder.Operations.Queries
+@using CodeBuilder.Bases
+
+@inherits BaseComponent
+@typeparam T where T : class, IStandardized
+
+<div class="dropdown is-fullwidth @(_results.Count > 0 ? "is-active" : "")">
+    <div class="dropdown-trigger">
+        <div class="control has-icons-right has-icons-left">
+            <input class="input" type="text" placeholder="Search..." @bind="@_view.SearchTerm" @bind:event="oninput" @onkeyup="Search">
+            <span class="icon is-left">
+                <i class="fa fa-search"></i>
+            </span>
+            @if (_view.Searching)
+            {
+                <span class="icon is-right">
+                    <i class="fa fa-spinner fa-spin"></i>
+                </span>
+            }
+        </div>
+    </div>
+    <div class="dropdown-menu" role="menu">
+        <div class="dropdown-content">
+            @foreach (var result in _results)
+            {
+                <a class="dropdown-item pr-4" @onclick="async () => await ResultClicked(result)">
+                    <div class="level is-mobile is-marginless">
+                        <div class="level-left mr-2">
+                            <div class="level-item">
+                                <span>@result.GetName()</span>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                @if (!string.IsNullOrWhiteSpace(result.GetStandard()))
+                                {
+                                    <span class="tag">@result.GetStandard()</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            }
+            @if (CreateNew.HasDelegate)
+            {
+                <a class="dropdown-divider"></a>
+                <a class="dropdown-item" @onclick="CreateNewClicked">
+                    <span class="icon">
+                        <i class="fa fa-plus"></i>
+                    </span>
+                    <span>Create new...</span>
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+
+    // Parameters
+
+    [Parameter]
+    public EventCallback<T> ItemClicked { get; set; }
+
+    [Parameter]
+    public EventCallback CreateNew { get; set; }
+
+    [Parameter]
+    public bool IncludeStandard { get; set; }
+
+    // Fields
+
+    private List<T> _results;
+
+    private ViewModel _view;
+
+    // Constructors
+
+    public SearchComponent()
+    {
+        _results = new List<T>();
+        _view = new ViewModel();
+    }
+
+    // Methods
+
+    private async Task Search(KeyboardEventArgs e)
+    {
+        if (_view.Searching)
+            return;
+
+        if (_view.SearchTerm.Length < 2)
+        {
+            _results.Clear();
+            return;
+        }
+
+        try
+        {
+            await StartSearching();
+
+            if (IncludeStandard)
+            {
+                _results = (await new GetCollectionQuery<T>(ContextFactory)
+                    .WithFilters(x => x.Name.Contains(_view.SearchTerm) || x.Desc.Contains(_view.SearchTerm))
+                    .WithIncludes("Standard")
+                    .Execute())
+                    .ToList();
+            }
+            else
+            {
+                _results = (await new GetCollectionQuery<T>(ContextFactory)
+                    .WithFilters(x => x.Name.Contains(_view.SearchTerm) || x.Desc.Contains(_view.SearchTerm))
+                    .Execute())
+                    .ToList();
+            }
+        }
+        finally
+        {
+            _view.Searching = false;
+        }
+    }
+
+    private async Task StartSearching()
+    {
+        _view.Searching = true;
+
+        await Task.Delay(10);
+
+        StateHasChanged();
+    }
+
+    private async Task ResultClicked(T item)
+    {
+        _view.SearchTerm = "";
+
+        _results.Clear();
+
+        if (ItemClicked.HasDelegate)
+        {
+            await ItemClicked.InvokeAsync(item);
+        }
+    }
+
+    private async Task CreateNewClicked()
+    {
+        _view.SearchTerm = "";
+
+        _results.Clear();
+
+        if (CreateNew.HasDelegate)
+        {
+            await CreateNew.InvokeAsync();
+        }
+    }
+
+    // Classes
+
+    private class ViewModel
+    {
+
+        // Properties
+
+        public string SearchTerm { get; set; }
+
+        public bool Searching { get; set; }
+
+        // Constructors
+
+        public ViewModel()
+        {
+            SearchTerm = "";
+        }
+    }
+
+
+}

@@ -1,0 +1,207 @@
+﻿@using CodeBuilder.Code
+@using CodeBuilder.Bases
+@using CodeBuilder.Models
+@using CodeBuilder.Operations.Commands
+@inherits BaseComponent
+
+<div style="@_dropClass transition: all 0.1s ease-in-out;" ondragover="event.preventDefault();" @ondragenter="OnDragEnter" @ondragleave="OnDragLeave" @ondrop="OnReorderDrop"></div>
+<div class="block">
+    <table class="block-head @_headClass table is-fullwidth has-background-light is-marginless" draggable="true" ondragover="event.preventDefault();" @ondragstart="() => Manager.SetSelectedItem(Block)" @ondrop="OnNestingDrop">
+        <colgroup>
+            <col style="width: 1%; white-space: nowrap;">
+            <col>
+            <col>
+            <col>
+            <col style="width: 1%; white-space: nowrap;">
+        </colgroup>
+        <tbody>
+            <tr>
+                <td>
+                    <span class="icon">
+                        <i class="fa fa-grip-vertical"></i>
+                    </span>
+                </td>
+                <td style="width:80px; text-align: center; vertical-align: bottom;">
+                    <img src="@($"http://latex.codecogs.com/gif.latex?{Block.MathName}")" />
+                </td>
+                <td>@Block.Name</td>
+                <td style="width:80px; text-align: center; vertical-align: bottom;">
+                    <img src="@($"http://latex.codecogs.com/gif.latex?{Block.UnitName}")" />
+                </td>
+                <td>
+                    <button class="button is-light is-small" @onclick="() => { Manager.DeleteBlock(Block); }">
+                        <span class="icon has-text-danger">
+                            <i class="fa fa-times"></i>
+                        </span>
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    @if (Block.Condition != null)
+    {
+        <table class="table is-fullwidth has-background-light is-marginless conditional-table" style="margin-top: 6px;">
+            <colgroup>
+                <col style="border-right: 1px solid #dbdbdb; width: 1%;">
+                <col style="border-right: 1px solid #dbdbdb;">
+                <col style="border-right: 1px solid #dbdbdb; width: 1%;">
+                <col>
+            </colgroup>
+            <tbody>
+                <tr>
+                    <td class="has-input">
+                        <div class="select has-reveal">
+                            <select @bind="Block.Condition.ConditionType">
+                                @foreach (ConditionType ct in Enum.GetValues(typeof(ConditionType)))
+                                {
+                                    <option value="@ct">@ct.GetDescription()</option>
+                                }
+                            </select>
+                        </div>
+                    </td>
+                    <td class="has-input">
+                        @if (Block.Condition.Lhs == null)
+                        {
+                            <input class="input" type="text" ondragover="event.preventDefault();" @bind="Block.Condition.LhsValue" @ondrop="() => Manager.ConditionLhsDrop(Block.Condition)">
+                        }
+                        else
+                        {
+                            <div class="field has-addons has-reveal">
+                                <div class="control is-expanded" style="display: flex; justify-content: center; align-items: center;" ondragover="event.preventDefault();" @ondrop="() => Manager.ConditionLhsDrop(Block.Condition)">
+                                    <img src="@($"http://latex.codecogs.com/gif.latex?{Block.Condition.Lhs.Math}")" />
+                                </div>
+                                <div class="control">
+                                    <button class="button is-light is-borderless is-radiusless" @onclick="() => Manager.RemoveConditionLhs(Block.Condition)">
+                                        <span class="icon">
+                                            <i class="fa fa-times"></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </td>
+                    <td class="has-input">
+                        <div class="select has-reveal">
+                            <select @bind="Block.Condition.OperationType">
+                                @foreach (OperationType ot in Enum.GetValues(typeof(OperationType)))
+                                {
+                                    <option value="@ot">@ot.GetDescription()</option>
+                                }
+                            </select>
+                        </div>
+                    </td>
+                    <td class="has-input">
+                        @if (Block.Condition.Rhs == null)
+                        {
+                            <input class="input" type="text" ondragover="event.preventDefault();" @bind="Block.Condition.RhsValue" @ondrop="() => Manager.ConditionRhsDrop(Block.Condition)">
+                        }
+                        else
+                        {
+                            <div class="field has-addons has-reveal">
+                                <div class="control is-expanded" style="display: flex; justify-content: center; align-items: center;" ondragover="event.preventDefault();" @ondrop="() => Manager.ConditionRhsDrop(Block.Condition)">
+                                    <img src="@($"http://latex.codecogs.com/gif.latex?{Block.Condition.Rhs.Math}")" />
+                                </div>
+                                <div class="control">
+                                    <button class="button is-light is-radiusless is-borderless" @onclick="() => Manager.RemoveConditionRhs(Block.Condition)">
+                                        <span class="icon">
+                                            <i class="fa fa-times"></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    }
+    @if (Block.Children.Any())
+    {
+        <div style="padding: 0px 6px 6px 15px;">
+            @foreach (var child in Block.Children.OrderBy(x => x.Index))
+            {
+                <CascadingValue Value="Manager">
+                    <BlockComponent Block="child"></BlockComponent>
+                </CascadingValue>
+            }
+        </div>
+    }
+</div>
+
+@code {
+
+    // Parameters
+
+    [CascadingParameter]
+    public IViewManager Manager { get; set; }
+
+    [Parameter]
+    public BlockModel Block { get; set; }
+
+    // Fields
+
+    private string _dropClass = "height: 1px; padding: 5px;";
+
+    private string _headClass = "";
+
+    // Events
+
+    protected override void OnParametersSet()
+    {
+        _headClass = Block.Condition == null ? "" : "has-condition";
+    }
+
+    // Methods
+
+    private async void ToggleCondition()
+    {
+        if (Block.Condition == null)
+        {
+            Block.Condition = new ConditionModel();
+
+            _headClass = "has-condition";
+
+            if (await new CreateCommand<ConditionModel>(ContextFactory, Block.Condition).Execute())
+            {
+                await new UpdateCommand<BlockModel>(ContextFactory, Block).Execute();
+            }
+        }
+        else
+        {
+            Guid id = Block.Condition.Id;
+
+            Block.ConditionId = null;
+
+            Block.Condition = null;
+
+            if (await new UpdateCommand<BlockModel>(ContextFactory, Block).Execute())
+            {
+                if (await new DeleteCommand<ConditionModel>(ContextFactory, id).Execute())
+                {
+                    _headClass = "";
+                }
+            }
+        }
+    }
+
+    private void OnDragEnter()
+    {
+        _dropClass = "height: 1px; padding: 15px;";
+    }
+
+    private void OnDragLeave()
+    {
+        _dropClass = "height: 1px; padding: 5px;";
+    }
+
+    private void OnNestingDrop()
+    {
+        Manager.NestingDrop(Block);
+    }
+
+    private void OnReorderDrop()
+    {
+        Manager.ReorderDrop(Block);
+        _dropClass = "height: 1px; padding: 5px;";
+    }
+}
