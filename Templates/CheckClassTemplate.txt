@@ -24,12 +24,14 @@ class [Name]
             Calculate();
         }
 
-        // Methods
+        // Method: calculate values
 
         private void Calculate()
         {
             [Calculate]
         }
+
+        // Method: add calcs to output
 
         private void AddToOutput(ICalculation calc, ref List<Row> output)
         {
@@ -38,6 +40,8 @@ class [Name]
                 output.Add(new Row(calc));
             }
         }
+
+        // Method: add summary data
 
         private void GetSummary()
         {

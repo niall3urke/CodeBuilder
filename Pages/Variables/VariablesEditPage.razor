@@ -569,7 +569,7 @@
             {
                 if (double.TryParse(_variable.Value, out double value))
                 {
-                    _view.CalculationResult = (double)new Expression(calculation).Evaluate();
+                    _view.CalculationResult = (double)((int)new Expression(calculation).Evaluate());
 
                     double diff = _view.CalculationResult - value;
 

@@ -43,7 +43,7 @@
                     </div>
                     <IModelComponent Item="_brief"></IModelComponent>
                     <IStandardizedComponent Item="_brief"></IStandardizedComponent>
-                    <!-- Briefs -->
+                    <!-- Checks -->
                     <div class="box px-6 py-6">
                         <div class="level is-mobile">
                             <div class="level-left">
@@ -53,7 +53,7 @@
                                     </span>
                                 </div>
                                 <div class="level-item">
-                                    <h4 class="label">Briefs</h4>
+                                    <h4 class="label">Checks</h4>
                                 </div>
                             </div>
                             <div class="level-right">
@@ -199,7 +199,7 @@
     private async Task<bool> GetItemFromDatabase()
     {
         _brief = await new GetQuery<BriefModel>(ContextFactory)
-            .WithIncludes("Checks")
+            .WithIncludes("Checks", "Standard")
             .WithId(Id)
             .Execute();
 

@@ -1,6 +1,12 @@
 ﻿@page "/"
+@using CodeBuilder.Data;
+@using CodeBuilder.Models;
+@using CodeBuilder.Models.Briefs;
+@using CodeBuilder.Operations.Queries;
 @using CodeBuilder.Services
+@using Microsoft.EntityFrameworkCore;
 @inject DisplaySettingsService Settings
+@inject IDbContextFactory<ApplicationDbContext> ContextFactory
 
 <PageTitle>Dashboard</PageTitle>
 <section class="section">
@@ -16,76 +22,104 @@
             </div>
         <div class="columns is-multiline">
             <div class="column is-4">
-                <div class="box">
-                    <p class="heading">
-                        <span class="icon">
-                            <i class="fa fa-calculator"></i>
-                        </span>
-                        <span>Calculations</span>
-                    </p>
-                    <p class="title is-1">1</p>
-                </div>
+                <a href="/variables">
+                    <div class="box">
+                        <p class="heading">
+                            <span class="icon">
+                                <i class="fa fa-subscript"></i>
+                            </span>
+                            <span>Variables</span>
+                        </p>
+                        <p class="title is-1">@_model.NumVariables</p>
+                    </div>
+                </a>
             </div>
             <div class="column is-4">
-                <div class="box">
-                    <p class="heading">
-                        <span class="icon">
-                            <i class="fa fa-check"></i>
-                        </span>
-                        <span>Checks</span>
-                    </p>
-                    <p class="title is-1">1</p>
-                </div>
+                <a href="/checks">
+                    <div class="box">
+                        <p class="heading">
+                            <span class="icon">
+                                <i class="fa fa-check"></i>
+                            </span>
+                            <span>Checks</span>
+                        </p>
+                        <p class="title is-1">@_model.NumChecks</p>
+                    </div>
+                </a>
             </div>
             <div class="column is-4">
-                <div class="box">
-                    <p class="heading">
-                        <span class="icon">
-                            <i class="fa fa-subscript"></i>
-                        </span>
-                        <span>Variables</span>
-                    </p>
-                    <p class="title is-1">1</p>
-                </div>
+                <a href="/briefs">
+                    <div class="box">
+                        <p class="heading">
+                            <span class="icon">
+                                <i class="fa fa-file"></i>
+                            </span>
+                            <span>Briefs</span>
+                        </p>
+                        <p class="title is-1">@_model.NumBriefs</p>
+                    </div>
+                </a>
             </div>
             <div class="column is-4">
-                <div class="box">
-                    <p class="heading">
-                        <span class="icon">
-                            <i class="fa fa-cube"></i>
-                        </span>
-                        <span>Models</span>
-                    </p>
-                    <p class="title is-1">1</p>
-                </div>
+                <a href="/standards">
+                    <div class="box">
+                        <p class="heading">
+                            <span class="icon">
+                                <i class="fa fa-certificate"></i>
+                            </span>
+                            <span>Standards</span>
+                        </p>
+                        <p class="title is-1">@_model.NumStandards</p>
+                    </div>
+                </a>
             </div>
             <div class="column is-4">
-                <div class="box">
-                    <p class="heading">
-                        <span class="icon">
-                            <i class="fa fa-file"></i>
-                        </span>
-                        <span>Briefs</span>
-                    </p>
-                    <p class="title is-1">1</p>
-                </div>
+                <a href="/variable-groups">
+                    <div class="box">
+                        <p class="heading">
+                            <span class="icon">
+                                <i class="fa fa-cubes"></i>
+                            </span>
+                            <span>Variable Groups</span>
+                        </p>
+                        <p class="title is-1">@_model.NumGroups</p>
+                    </div>
+                </a>
             </div>
             <div class="column is-4">
-                <div class="box">
-                    <p class="heading">
-                        <span class="icon">
-                            <i class="fa fa-certificate"></i>
-                        </span>
-                        <span>Standards</span>
-                    </p>
-                    <p class="title is-1">1</p>
-                </div>
+                <a href="/tables">
+                    <div class="box">
+                        <p class="heading">
+                            <span class="icon">
+                                <i class="fa fa-table"></i>
+                            </span>
+                            <span>Tabular Data</span>
+                        </p>
+                        <p class="title is-1">@_model.NumTables</p>
+                    </div>
+                </a>
             </div>
         </div>
     </div>
 </section>
 
 @code {
+    private ViewModel _model;
+
+    public Index()
+    {
+        _model = new ViewModel();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _model.NumGroups = (await new GetCountQuery<VariableGroupModel>(ContextFactory).Execute());
+        _model.NumStandards = (await new GetCountQuery<StandardModel>(ContextFactory).Execute());
+        _model.NumVariables = (await new GetCountQuery<VariableModel>(ContextFactory).Execute());
+        _model.NumTables = (await new GetCountQuery<TableDataModel>(ContextFactory).Execute());
+        _model.NumChecks = (await new GetCountQuery<CheckModel>(ContextFactory).Execute());
+        _model.NumBriefs = (await new GetCountQuery<BriefModel>(ContextFactory).Execute());
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -93,6 +127,21 @@
         {
             await Settings.Load();
         }
+    }
+
+    private class ViewModel
+    {
+        public int NumVariables { get; set; }
+
+        public int NumStandards { get; set; }
+
+        public int NumTables { get; set; }
+
+        public int NumGroups { get; set; }
+
+        public int NumChecks { get; set; }
+
+        public int NumBriefs { get; set; }
     }
 
 }

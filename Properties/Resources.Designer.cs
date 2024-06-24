@@ -159,12 +159,11 @@ namespace CodeBuilder.Properties {
         ///            Calculate();
         ///        }
         ///
-        ///        // Methods
+        ///        // Method: calculate values
         ///
         ///        private void Calculate()
         ///        {
-        ///            [Calculate]
-        ///         [rest of string was truncated]&quot;;.
+        ///            [Cal [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string CheckClassTemplate {
             get {

@@ -1,7 +1,4 @@
-﻿using CodeBuilder.Components;
-using CodeBuilder.Data;
-using CodeBuilder.Models;
-using CodeBuilder.Operations.Queries;
+﻿using CodeBuilder.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace CodeBuilder.Code

@@ -11,6 +11,7 @@
 
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
+        public Guid StandardId { get; set; }
         public Guid Id { get; set; }
 
         public string? Reference { get; set; }

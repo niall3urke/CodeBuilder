@@ -8,9 +8,9 @@
         public StandardModel? Standard { get; set; }
         public BlockModel? Block { get; set; }
         public StateType State { get; set; }
-
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
+        public Guid StandardId { get; set; }
         public Guid Id { get; set; }
 
         public string? Reference { get; set; }

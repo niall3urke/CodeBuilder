@@ -17,6 +17,7 @@
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
 
+        public Guid StandardId { get; set; }
         public Guid RowId { get; set; }
         public Guid ColId { get; set; }
         public Guid Id { get; set; }
