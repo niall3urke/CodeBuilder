@@ -33,6 +33,16 @@ The ultimate aim for this project is to get to the point where variables, checks
 
 ## Usage
 
+### Create Standards
+1. Navigate to the `/standards` page and click the "+" button.
+2. Enter the name of the standard and description (optional)
+3. By default the standard will have a state of "Current", but you can change this to account for archived or superseeded design codes
+4. Enter the "shortcode", publish date, and type. Currently CodeBuilder only has two types of design code - Eurcode and British Standard, but there's no reason this couldn't be opened up to any type of code body.
+5. You can add some ancillary meta data, such as the ISBN and a reference link to external documentation if needed.
+6. Click the save button and you'll be directed back to the `/standards` page.
+
+![codebuilder standards](https://github.com/niall3urke/CodeBuilder/assets/11950726/167284e1-237e-424a-b2ec-dc1fde5b55ef)
+
 ### Create Variables
 
 1. Navigate to the `/variables` page and click the "+" button.
@@ -45,6 +55,8 @@ The ultimate aim for this project is to get to the point where variables, checks
 8. You can optionally validate your calculation. This is determined from the default "value" properties of the calculation variables and the default result property.
 9. When you're happy with everything, click save, and you'll be directed back to the `/variables` page.
 
+![codebuilder variables](https://github.com/niall3urke/CodeBuilder/assets/11950726/46fc54e1-7969-4272-a0b5-dd7ae1868cf5)
+
 ### Create Checks
 
 1. Navigate to the `/checks` page and click the "+" button.
@@ -53,3 +65,8 @@ The ultimate aim for this project is to get to the point where variables, checks
 4. Define the logic for the check using conditional blocks and outcomes.
 5. Link the check to the appropriate standards.
 6. Save the check and review it on the `/checks` page.
+
+![codebuilder checks](https://github.com/niall3urke/CodeBuilder/assets/11950726/8e83e652-bd61-42d9-814c-c1b67164f0b1)
+
+### Create Briefs
+Briefs are simply a compilation of checks. There's work to be done yet on this area in order to get it functional. 
