@@ -6,8 +6,10 @@
 @using CodeBuilder.Models
 @using CodeBuilder.Operations.Queries
 @using CodeBuilder.Operations.Commands
+@using CodeBuilder.Pages.Variables.Modals;
 @using CodeBuilder.Parsers
 @using CodeBuilder.Services
+@using CodeBuilder.Services.Modal;
 @using NCalc
 
 @inherits BaseComponent
@@ -37,10 +39,10 @@
                     </div>
                 </div>
                 <!-- # Basics -->
-                <IModelComponent Item="_calculation"></IModelComponent>
-                <IVariableComponent Item="_calculation"></IVariableComponent>
-                <IMeasurableComponent Item="_calculation"></IMeasurableComponent>
-                <IStandardizedComponent Item="_calculation"></IStandardizedComponent>
+                <IModelComponent Item="_variable"></IModelComponent>
+                <IVariableComponent Item="_variable"></IVariableComponent>
+                <IMeasurableComponent Item="_variable"></IMeasurableComponent>
+                <IStandardizedComponent Item="_variable"></IStandardizedComponent>
                 <div class="level is-mobile my-6">
                     <div class="level-left">
                         <div class="level-item">
@@ -89,14 +91,14 @@
                         <div class="field mb-5">
                             <label class="heading">MathJax Input</label>
                             <div class="control">
-                                <input class="input" type="text" @bind="_calculation.MathCalculation" @bind:event="oninput" @onchange="CalculationChanged" />
+                                <input class="input" type="text" @bind="_variable.MathCalculation" @bind:event="oninput" @onchange="CalculationChanged" />
                             </div>
                         </div>
                         <div class="field">
                             <label class="heading">MathJax Output</label>
                             <div class="control">
                                 <div class="box is-shadowless has-background-light has-text-centered">
-                                    <img src="@($"http://latex.codecogs.com/gif.latex?{_calculation.MathCalculation}")" />
+                                    <img src="@($"http://latex.codecogs.com/gif.latex?{_variable.MathCalculation}")" />
                                 </div>
                             </div>
                         </div>
@@ -263,7 +265,7 @@
                 }
                 <!-- #Buttons -->
                 <div class="buttons is-right">
-                    <button class="button is-link is-light">
+                    <button class="button is-light" @onclick="ShowPreview">
                         <span class="icon">
                             <i class="fa fa-code"></i>
                         </span>
@@ -288,7 +290,7 @@
 
     private List<StandardModel> _standards;
 
-    private VariableModel _calculation;
+    private VariableModel _variable;
 
     private ViewModel _view;
 
@@ -300,7 +302,7 @@
 
         _standards = new List<StandardModel>();
 
-        _calculation = new VariableModel();
+        _variable = new VariableModel();
 
         _view = new ViewModel();
     }
@@ -321,13 +323,13 @@
 
     private async Task Save()
     {
-        _calculation.Code = _calculation.Math?.Replace("{", "");
-        _calculation.Code = _calculation.Math?.Replace("}", "");
-        _calculation.Code = _calculation.Math?.Trim();
+        _variable.Code = _variable.Math?.Replace("{", "");
+        _variable.Code = _variable.Math?.Replace("}", "");
+        _variable.Code = _variable.Math?.Trim();
 
         var variables = _records.Select(x => x.Variable);
 
-        if (!await new AttachCommand<VariableModel>(ContextFactory, _calculation).Execute())
+        if (!await new AttachCommand<VariableModel>(ContextFactory, _variable).Execute())
         {
             return;
         }
@@ -340,7 +342,7 @@
         foreach (var variable in variables)
         {
             await new CreateCommand<VariableInputModel>(
-                ContextFactory, new() { CalculationId = _calculation.Id, InputId = variable.Id }).Execute();
+                ContextFactory, new() { CalculationId = _variable.Id, InputId = variable.Id }).Execute();
         }
 
         Nav.NavigateTo("/variables");
@@ -440,26 +442,26 @@
 
     private void StandardSelected(StandardModel standard)
     {
-        _calculation.Standard = standard;
+        _variable.Standard = standard;
         _view.StandardSearchTerm = "";
         _standards.Clear();
     }
 
     private void RemoveStandard()
     {
-        _calculation.Standard = null;
+        _variable.Standard = null;
     }
 
     // Methods
 
     private async Task FindVariables()
     {
-        if (string.IsNullOrWhiteSpace(_calculation.MathCalculation))
+        if (string.IsNullOrWhiteSpace(_variable.MathCalculation))
         {
             return;
         }
 
-        if (!MathVariableExtractor.Extract(_calculation.MathCalculation, out List<VariableModel> variables))
+        if (!MathVariableExtractor.Extract(_variable.MathCalculation, out List<VariableModel> variables))
         {
             return;
         }
@@ -479,7 +481,7 @@
                 }
             }
 
-            _calculation.CodeCalculation = MathParser.Parse(_calculation.MathCalculation, variables);
+            _variable.CodeCalculation = MathParser.Parse(_variable.MathCalculation, variables);
         }
         finally
         {
@@ -518,7 +520,7 @@
 
     private async Task CheckCalculation()
     {
-        if (string.IsNullOrWhiteSpace(_calculation.CodeCalculation))
+        if (string.IsNullOrWhiteSpace(_variable.CodeCalculation))
         {
             return;
         }
@@ -527,7 +529,7 @@
 
         try
         {
-            string calculation = _calculation.CodeCalculation;
+            string calculation = _variable.CodeCalculation;
 
             foreach (var variable in _records.Select(x => x.Variable))
             {
@@ -539,7 +541,7 @@
 
             try
             {
-                if (double.TryParse(_calculation.Value, out double value))
+                if (double.TryParse(_variable.Value, out double value))
                 {
                     string result = new Expression(calculation).Evaluate().ToString();
 
@@ -570,6 +572,19 @@
         StateHasChanged();
 
         await Task.Delay(500);
+    }
+
+    //Modal
+
+    private void ShowPreview()
+    {
+        var parameters = new ModalParameters();
+
+        parameters.Add("Model", _variable);
+
+        parameters.Add("Variables", _records.Select(x => x.Variable).ToList());
+
+        Modal.Show<VariablePreviewModal>(parameters);
     }
 
     // View models

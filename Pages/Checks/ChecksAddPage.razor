@@ -6,7 +6,9 @@
 @using CodeBuilder.Operations.Commands
 @using CodeBuilder.Operations.Queries
 @using CodeBuilder.Pages.Checks.Helpers
+@using CodeBuilder.Pages.Checks.Modals;
 @using CodeBuilder.Services
+@using CodeBuilder.Services.Modal;
 
 @inherits BaseComponent
 @inject DisplaySettingsService Settings
@@ -108,7 +110,7 @@
                 <IMetaComponent Item="_check"></IMetaComponent>
                 <!-- #Buttons -->
                 <div class="buttons is-right">
-                    <button class="button is-link is-light">
+                    <button class="button is-light" @onclick="ShowPreview">
                         <span class="icon">
                             <i class="fa fa-code"></i>
                         </span>
@@ -249,6 +251,17 @@
 
     public async Task DeleteBlock(BlockModel block) =>
     await _dropManager.HandleDelete(block);
+
+    // Modal
+
+    private void ShowPreview()
+    {
+        var parameters = new ModalParameters();
+
+        parameters.Add("Model", _check);
+
+        Modal.Show<CheckPreviewModal>(parameters);
+    }
 
     // Classes
 

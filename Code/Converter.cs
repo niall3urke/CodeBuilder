@@ -373,7 +373,10 @@ namespace CodeBuilder.Code
                 parameters += $"{Type(variable.Storage)} {variable.Code}, ";
             }
 
-            parameters = parameters[..^2];
+            if (parameters.Length > 2)
+            {
+                parameters = parameters[..^2];
+            }
 
             content = content.Replace("[Variables]", parameters);
 
