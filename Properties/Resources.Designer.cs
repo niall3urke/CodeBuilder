@@ -76,7 +76,7 @@ namespace CodeBuilder.Properties {
         ///
         ///        // Constructors
         ///
-        ///        public SimpleBeamDesign([Models])
+        ///        public [Name]([Inputs])
         ///        {
         ///            [InitializeFields]
         ///

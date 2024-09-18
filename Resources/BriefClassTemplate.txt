@@ -1,11 +1,11 @@
-public class [Name] : IDesignBrief
+public class [Code] : IDesignBrief
     {
 
         // Properties
 
         public List<Section> Sections { get; set; }
         public List<Summary> Summary { get; set; }
-        public string Title => "[Title]";
+        public string Title => [Name]
 
         // Fields
 

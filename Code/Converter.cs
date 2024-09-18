@@ -1,4 +1,6 @@
 ﻿using CodeBuilder.Models;
+using CodeBuilder.Models.Briefs;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 
 namespace CodeBuilder.Code
@@ -13,6 +15,105 @@ namespace CodeBuilder.Code
         private static List<VariableModel> _outputs;
 
         private static List<VariableModel> _inputs;
+
+        // =============
+        // ===== Briefs
+        // =============
+
+        public static string Brief(BriefModel brief, List<BriefCheckModel> checks)
+        {
+            string content = Properties.Resources.BriefClassTemplate;
+
+            // Get all outputs
+
+            if (brief == null)
+                return "";
+
+            //_outputs = GetPublicVariables(check.Block);
+
+            //_inputs = GetPrivateVariables(_outputs);
+
+            // Get the calculate content
+
+            //content = content.Replace("[Properties]", GetProperties(_outputs));
+
+            content = content.Replace("[Fields]", GetFields(checks));
+
+            content = content.Replace("[Inputs]", GetInputs(checks));
+
+            content = content.Replace("[InitializeFields]", GetInitializeFields(checks));
+
+            //content = content.Replace("[Output]", GetOutput(_outputs));
+
+            //content = content.Replace("[Calculate]", GetCalculate(check));
+
+            //// Simple conversions
+
+            content = content.Replace("[Name]", Name(brief));
+
+            //content = content.Replace("[Title]", check.Name);
+
+            return content;
+        }
+
+        private static string GetFields(IEnumerable<BriefCheckModel> checks)
+        {
+            string content = "";
+
+            foreach (var check in checks)
+            {
+                string className = Strip(check?.Check?.Name ?? "");
+
+                if (!string.IsNullOrWhiteSpace(className))
+                    content += $"private {className} {FirstCharToLower(className)}; {Environment.NewLine}";
+            }
+
+            content += Environment.NewLine;
+
+            return content.Length > 1 ? content[..^2] : content;
+        }
+
+        private static string GetInputs(IEnumerable<BriefCheckModel> checks)
+        {
+            string content = "";
+
+            foreach (var check in checks)
+            {
+                string className = Strip(check?.Check?.Name ?? "");
+
+                if (!string.IsNullOrWhiteSpace(className))
+                    content += $"{className} {FirstCharToLower(className)}, ";
+            }
+
+            return content.Length > 1 ? content[..^2] : content;
+        }
+
+        private static string GetInitializeFields(IEnumerable<BriefCheckModel> checks)
+        {
+            string content = "";
+
+            foreach (var check in checks)
+            {
+                string code = Strip(FirstCharToLower(check?.Check?.Name ?? ""));
+
+                if (!string.IsNullOrWhiteSpace(code))
+                {
+                    content += $"this.{code} = {code}; {Environment.NewLine}";
+                }
+            }
+
+            content += Environment.NewLine;
+
+            return content;
+        }
+
+        private static string FirstCharToLower(string value)
+        {
+            if (!string.IsNullOrWhiteSpace(value) && char.IsUpper(value[0]))
+                return value.Length == 1 ? char.ToLower(value[0]).ToString() : char.ToLower(value[0]) + value[1..];
+
+            return value;
+        }
 
         // =============
         // ===== Checks
@@ -108,7 +209,7 @@ namespace CodeBuilder.Code
 
         // Get: [InitializeFields]
 
-        private static string GetInitializeFields(List<VariableModel> inputs)
+        private static string GetInitializeFields(IEnumerable<ICodable> inputs)
         {
             string content = "";
 

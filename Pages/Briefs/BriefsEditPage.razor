@@ -6,7 +6,9 @@
 @using CodeBuilder.Models;
 @using CodeBuilder.Operations.Commands
 @using CodeBuilder.Operations.Queries
+@using CodeBuilder.Pages.Briefs.Modals
 @using CodeBuilder.Services
+@using CodeBuilder.Services.Modal
 
 @inherits BaseComponent
 @inject DisplaySettingsService Settings
@@ -141,7 +143,7 @@
                         <div class="level-right">
                             <div class="level-item">
                                 <div class="buttons">
-                                    <button class="button is-light">
+                                    <button class="button is-light" @onclick="ShowPreview">
                                         <span class="icon">
                                             <i class="fa fa-code"></i>
                                         </span>
@@ -371,6 +373,18 @@
         {
             Nav.NavigateTo("/briefs");
         }
+    }
+
+    // Modals
+
+    private void ShowPreview()
+    {
+        var parameters = new ModalParameters();
+
+        parameters.Add("Model", _brief);
+        parameters.Add("Checks", _checks);
+
+        Modal.Show<BriefPreviewModal>(parameters);
     }
 
     // Classes
